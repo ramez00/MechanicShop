@@ -1,0 +1,9 @@
+global using MechanicShop.Domain.Customers;
+global using MechanicShop.Domain.Customers.cars;
+global using MechanicShop.Domain.Employees;
+global using MechanicShop.Domain.Identity;
+global using MechanicShop.Domain.RepairTasks;
+global using MechanicShop.Domain.RepairTasks.Parts;
+global using MechanicShop.Domain.workOrders.Billing;
+global using MechanicShop.Domain.WorkOrders;
+global using Microsoft.EntityFrameworkCore;
