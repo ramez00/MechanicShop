@@ -12,6 +12,7 @@ public sealed class RepairTask : AuditableEntity
     public RepairDurationInMinutes EstimatedDurationInMins { get; private set; }
     private readonly List<Part> _parts = [];
     public IEnumerable<Part> Parts => _parts.AsReadOnly();
+    public decimal totalCost => Parts.Sum(p => p.Quantity * p.Price) + LaborCost;
     private RepairTask() { } // For EF Core
 
     private RepairTask(Guid id, string name, decimal laborCost, RepairDurationInMinutes estimatedDurationInMins, List<Part> parts)

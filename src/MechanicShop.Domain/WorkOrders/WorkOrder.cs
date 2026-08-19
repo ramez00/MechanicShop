@@ -17,7 +17,7 @@ public sealed class WorkOrder : AuditableEntity
     public Spot Spot { get; private set; }
     public WorkOrderState State { get; private set; }
     public Employee? Labor { get; set; }
-    public Car? Vehicle { get; set; }
+    public Car? Car { get; set; }
     public Invoice? Invoice { get; set; }
     public decimal? Discount { get; private set; }
     public decimal? Tax { get; private set; }

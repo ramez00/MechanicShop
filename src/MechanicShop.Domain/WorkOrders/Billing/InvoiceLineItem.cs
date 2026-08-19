@@ -15,8 +15,8 @@ public sealed class InvoiceLineItem : AuditableEntity
 
     private InvoiceLineItem() { } // For EF Core
 
-    private InvoiceLineItem(Guid id, Guid invoiceId, int lineNumber, string description,
-         int quantity, decimal unitPrice) : base(id)
+    private InvoiceLineItem(Guid invoiceId, int lineNumber, string description,
+         int quantity, decimal unitPrice)
     {
         InvoiceId = invoiceId;
         LineNumber = lineNumber;
@@ -25,7 +25,7 @@ public sealed class InvoiceLineItem : AuditableEntity
         UnitPrice = unitPrice;
     }
 
-    public static Result<InvoiceLineItem> Create(Guid id, Guid invoiceId, int lineNumber, string description,
+    public static Result<InvoiceLineItem> Create(Guid invoiceId, int lineNumber, string description,
         int quantity, decimal unitPrice)
     {
         if (invoiceId == Guid.Empty)
@@ -43,6 +43,6 @@ public sealed class InvoiceLineItem : AuditableEntity
         if (unitPrice <= 0)
             return InvoiceLineItemErrors.UnitPriceInvalid;
 
-        return new InvoiceLineItem(id, invoiceId, lineNumber, description, quantity, unitPrice);
+        return new InvoiceLineItem(invoiceId, lineNumber, description, quantity, unitPrice);
     }
 }

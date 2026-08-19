@@ -1,4 +1,5 @@
 using MechanicShop.Domain.Common;
+using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.workOrders.Enums;
 using MechanicShop.Domain.WorkOrders;
 using MechanicShop.Domain.WorkOrders.Billing;
@@ -18,4 +19,70 @@ public sealed class Invoice : AuditableEntity
     public decimal Total => Subtotal - DiscountAmount + TaxAmount;
     public DateTimeOffset? PaidAt { get; private set; }
     public WorkOrder? WorkOrder { get; set; }
+
+    private Invoice() {}
+
+    private Invoice(
+        Guid id,
+        Guid workOrderId,
+        DateTimeOffset issuedAt,
+        List<InvoiceLineItem> lineItems,
+        decimal discountAmount,
+        decimal taxAmount)
+        : base(id)
+    {
+        WorkOrderId = workOrderId;
+        IssuedAtUtc = issuedAt;
+        DiscountAmount = discountAmount;
+        Status = InvoiceStatus.unpaid;
+        TaxAmount = taxAmount;
+        _lineItems = lineItems;
+    }
+    
+    public static Result<Invoice> Create(
+        Guid id,
+        Guid workOrderId,
+        List<InvoiceLineItem> items,
+        decimal discountAmount,
+        decimal taxAmount,
+        TimeProvider datetime)
+    {
+        if (workOrderId == Guid.Empty)
+            return InvoiceErrors.WorkOrderIdInvalid;
+        
+
+        if (items is null || items.Count == 0)
+            return InvoiceErrors.LineItemsEmpty;
+
+        return new Invoice(id, workOrderId, datetime.GetUtcNow(), items, discountAmount, taxAmount);
+    }
+
+    public Result<Updated> ApplyDiscount(decimal discountAmount)
+    {
+        if (Status != InvoiceStatus.unpaid)
+            return InvoiceErrors.InvoiceLocked;
+
+        if (discountAmount < 0)
+            return InvoiceErrors.DiscountNegative;
+
+        if (discountAmount > Subtotal)
+            return InvoiceErrors.DiscountExceedsSubtotal;
+
+        DiscountAmount = discountAmount;
+
+        return Result.updated;
+    }
+
+    public Result<Updated> MarkAsPaid(TimeProvider timeProvider)
+    {
+        if (Status != InvoiceStatus.unpaid)
+        {
+            return InvoiceErrors.InvoiceLocked;
+        }
+
+        Status = InvoiceStatus.paid;
+        PaidAt = timeProvider.GetUtcNow();
+
+        return Result.updated;
+    }
 }

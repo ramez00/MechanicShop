@@ -85,7 +85,7 @@ public class Customer : AuditableEntity
                 var updatedCarResult = existingCar.Update(incoming.Make, incoming.Model, incoming.Year, incoming.LicensePlate);
                 
                 if (updatedCarResult.IsError)
-                    return updatedCarResult.Errors;
+                    return updatedCarResult.Errors!;
             }
         }
 
