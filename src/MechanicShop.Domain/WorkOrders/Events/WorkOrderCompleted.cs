@@ -4,5 +4,5 @@ namespace MechanicShop.Domain.workOrders.Events;
 
 public sealed class WorkOrderCompleted : DomainEvent
 {
-    public Guid WorkOrderId { get; }
+    public Guid WorkOrderId { get; set; }
 }

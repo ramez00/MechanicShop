@@ -17,7 +17,7 @@ public static class RepairTaskMapper
         };
     }
 
-    public static List<RepairTaskDto> ToDtos(this List<RepairTask> entities)
+    public static List<RepairTaskDto> ToDtos(this IEnumerable<RepairTask> entities)
         => [..entities.Select(e => e.ToDto())];
 
     public static PartDto ToDto(this Part entity)
@@ -31,6 +31,6 @@ public static class RepairTaskMapper
         };
     }
 
-    public static List<PartDto> ToDtos(List<Part> entities)
+    public static List<PartDto> ToDtos(IEnumerable<Part> entities)
         => [..entities.Select(e => e.ToDto())];
 }
