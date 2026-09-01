@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authorization;
 using MechanicShop.infrastructure.BackgroundJobs;
 using MechanicShop.infrastructure.Identity.Policies;
 using Microsoft.Extensions.Caching.Hybrid;
+using MechanicShop.infrastructure.Services;
+using MechanicShop.infrastructure.RealTime;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -19,6 +21,9 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services,IConfiguration configuration)
     {
         services.AddSingleton(TimeProvider.System);
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<IUser, CurrentUserService>();
 
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         
@@ -87,15 +92,16 @@ public static class DependencyInjection
             Expiration = TimeSpan.FromMinutes(10), // L2, L3
             LocalCacheExpiration = TimeSpan.FromSeconds(30), // L1
         });
-        // services.AddScoped<IWorkOrderPolicy, WorkOrderPolicy>();
+        services.AddScoped<IWorkOrderPolicy, WorkOrderPolicy>();
 
-        // services.AddScoped<ITokenProvider, TokenProvider>();
+        services.AddScoped<ITokenProvider, TokenProvider>();
 
-        // services.AddScoped<IInvoicePdfGenerator, InvoicePdfGenerator>();
+        services.AddScoped<IInvoicePdfGenerator, InvoicePdfGenerator>();
 
-        // services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
-        // services.AddScoped<IWorkOrderNotifier, SignalRWorkOrderNotifier>();
+        services.AddSignalR();
+        services.AddScoped<IWorkOrderNotifier, SignalRWorkOrderNotifier>();
 
         services.AddHostedService<OverdueBookingCleanupService>();
         

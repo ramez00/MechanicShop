@@ -9,15 +9,15 @@ using MechanicShop.Domain.RepairTasks.Parts;
 using MechanicShop.Domain.workOrders.Billing;
 using MechanicShop.Domain.WorkOrders;
 using MechanicShop.infrastructure.Identity;
-using MediatR;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MediatR;
 
 namespace MechanicShop.infrastructure.Data;
 
 public class AppDbContext(
     DbContextOptions<AppDbContext> options,
-    IMediator mediator
+    IPublisher  publisher
 ) : IdentityDbContext<AppUser>(options) , IAppDbContext
 {
     public DbSet<Customer> Customers => Set<Customer>();
@@ -48,7 +48,7 @@ public class AppDbContext(
 
         foreach (var domainEvent in domainEvents)
         {
-            await mediator.Publish(domainEvent, cancellationToken);
+            await publisher.Publish(domainEvent, cancellationToken);
         }
 
         foreach (var entity in domainEntities)

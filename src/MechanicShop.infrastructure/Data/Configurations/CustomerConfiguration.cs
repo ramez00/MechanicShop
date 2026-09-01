@@ -21,8 +21,6 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.Email)
                .HasMaxLength(150);
 
-        builder.HasMany(c => c.Cars).WithOne().HasForeignKey(v => v.CustomerId);
-
         builder.Navigation(c => c.Cars)
        .UsePropertyAccessMode(PropertyAccessMode.Field);    }
 }
