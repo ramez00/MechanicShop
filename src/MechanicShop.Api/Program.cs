@@ -1,8 +1,13 @@
 using MechanicShop.infrastructure;
 using MechanicShop.infrastructure.Data;
 using MechanicShop.infrastructure.RealTime;
+using MechanicShop.infrastructure.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+
+builder.Services.AddControllers();
 
 builder.Services
         .AddApplicationLayer()
@@ -12,7 +17,6 @@ builder.Services
 
 var app = builder.Build();
 
-// app.MapGet("/", () => "Hello World!");
 if (app.Environment.IsDevelopment())
 {
     await app.InitialiseDatabaseAsync();
@@ -20,5 +24,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapHub<WorkOrderHub>("/hubs/workorders");
+
+app.MapControllers();
 
 app.Run();

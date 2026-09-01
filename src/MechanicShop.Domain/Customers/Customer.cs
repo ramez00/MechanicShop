@@ -41,7 +41,7 @@ public class Customer : AuditableEntity
             return CustomerErrors.EmailInvalid;
         }
 
-        return new Customer(id, name, phoneNumber, email, cars);
+        return new Customer(id, name, email, phoneNumber, cars);
     }
 
     public Result<Updated> Update(string name, string email, string phoneNumber)
