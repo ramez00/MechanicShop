@@ -7,14 +7,14 @@ using Microsoft.Extensions.Logging;
 
 namespace MechanicShop.Application.Features.Customers.Commands.Remove;
 
-public class RemoveCommandHandler(IAppDbContext context , ILogger<RemoveCommandHandler> logger,HybridCache cache) 
-: IRequestHandler<RemoveCommand, Result<Deleted>>
+public class RemoveCustomerCommandHandler(IAppDbContext context , ILogger<RemoveCustomerCommandHandler> logger,HybridCache cache) 
+: IRequestHandler<RemoveCustomerCommand, Result<Deleted>>
 {
     private readonly IAppDbContext _context = context;
-    private readonly ILogger<RemoveCommandHandler> _logger =logger;
+    private readonly ILogger<RemoveCustomerCommandHandler> _logger =logger;
     private readonly HybridCache _cache =cache;
 
-    public async Task<Result<Deleted>> Handle(RemoveCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Deleted>> Handle(RemoveCustomerCommand request, CancellationToken cancellationToken)
     {
         var customer = await _context.Customers.FindAsync(request.customerId);
 

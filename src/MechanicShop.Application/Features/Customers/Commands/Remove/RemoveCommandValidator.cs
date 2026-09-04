@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace MechanicShop.Application.Features.Customers.Commands.Remove;
 
-public class RemoveCommandValidator : AbstractValidator<RemoveCommand>
+public class RemoveCommandValidator : AbstractValidator<RemoveCustomerCommand>
 {
     public RemoveCommandValidator()
     {

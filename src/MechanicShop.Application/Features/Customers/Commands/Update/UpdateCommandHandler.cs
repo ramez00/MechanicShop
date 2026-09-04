@@ -7,17 +7,17 @@ using Microsoft.Extensions.Logging;
 
 namespace MechanicShop.Application.Features.Customers.Commands.Update;
 
-public class UpdateCommandHandler(ILogger<UpdateCommandHandler> logger,
+public class UpdateCustomerCommandHandler(ILogger<UpdateCustomerCommandHandler> logger,
     IAppDbContext context,
     HybridCache cache) 
-    : IRequestHandler<UpdateCommand, Result<Updated>>
+    : IRequestHandler<UpdateCustomerCommand, Result<Updated>>
 {
 
-    private readonly ILogger<UpdateCommandHandler> _logger = logger;
+    private readonly ILogger<UpdateCustomerCommandHandler> _logger = logger;
     private readonly IAppDbContext _context = context;
     private readonly HybridCache _cache = cache;
 
-    public async Task<Result<Updated>> Handle(UpdateCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Updated>> Handle(UpdateCustomerCommand request, CancellationToken cancellationToken)
     {
         var customer = await _context.Customers
                                      .Include(c => c.Cars)

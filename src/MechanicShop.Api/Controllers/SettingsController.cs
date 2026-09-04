@@ -2,7 +2,6 @@ using MechanicShop.infrastructure.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MechanicShop.Contracts.Responses;
-using MechanicShop.infrastructure.Settings;
 
 namespace MechanicShop.Api.Controllers;
 [Route("api/[controller]")]

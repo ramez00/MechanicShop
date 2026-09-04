@@ -3,7 +3,7 @@ using MediatR;
 
 namespace MechanicShop.Application.Features.Customers.Commands.Update;
 
-public sealed record UpdateCommand(
+public sealed record UpdateCustomerCommand(
     Guid CustomerId,
     string Name,
     string PhoneNumber,

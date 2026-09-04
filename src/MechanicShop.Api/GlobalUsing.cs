@@ -1,0 +1,11 @@
+global using Microsoft.AspNetCore.Mvc;
+global using MechanicShop.Application.Features.Customers.Commands;
+global using MediatR;
+global using Microsoft.AspNetCore.Authorization;
+global using MechanicShop.Application.Features.Customers.Commands.Update;
+global using MechanicShop.Application.Features.Customers.Create.Commands;
+global using MechanicShop.Application.Features.Customers.Queries.GetCustomer;
+global using MechanicShop.Application.Features.Customers.Queries.GetCustomerById;
+global using MechanicShop.Domain.Identity;
+global using Asp.Versioning;
+global using MechanicShop.Application.Features.Dashboard.Queries;

@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace MechanicShop.Application.Features.Customers.Commands.Update;
 
-public class UpdateCommandValidator : AbstractValidator<UpdateCommand>
+public class UpdateCommandValidator : AbstractValidator<UpdateCustomerCommand>
 {
     public UpdateCommandValidator()
     {
