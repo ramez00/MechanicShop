@@ -9,3 +9,15 @@ global using MechanicShop.Application.Features.Customers.Queries.GetCustomerById
 global using MechanicShop.Domain.Identity;
 global using Asp.Versioning;
 global using MechanicShop.Application.Features.Dashboard.Queries;
+global using MechanicShop.Application.Features.Labors.Queries;
+global using Microsoft.AspNetCore.OutputCaching;
+global using MechanicShop.Application.Features.Billing.Commands.IssueInvoice;
+global using MechanicShop.Application.Features.Billing.Commands.SettleInvoice;
+global using MechanicShop.Application.Features.Billing.Queries;
+global using MechanicShop.Application.Features.Billing.Queries.GetInvoiceById;
+global using MechanicShop.Application.Features.RepairTasks.Commands.Create;
+global using MechanicShop.Application.Features.RepairTasks.Commands.Remove;
+global using MechanicShop.Application.Features.RepairTasks.Commands.Update;
+global using MechanicShop.Application.Features.RepairTasks.Queries.GetRepairTasks;
+global using MechanicShop.Application.Features.RepairTasks.Queries.GetRepairTasksById;
+global using MechanicShop.Domain.RepairTasks.Enums;
