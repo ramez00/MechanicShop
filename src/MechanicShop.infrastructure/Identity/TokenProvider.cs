@@ -51,6 +51,9 @@ public class TokenProvider(
         foreach(var claim in user.Claims)
             claims.Add(claim);
 
+        foreach(var role in user.Roles)
+            claims.Add(new Claim(ClaimTypes.Role, role));
+
         var descriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),

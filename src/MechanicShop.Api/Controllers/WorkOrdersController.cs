@@ -127,12 +127,12 @@ public sealed class WorkOrdersController(ISender sender) : ApiController
     [MapToApiVersion("1.0")]
     public async Task<IActionResult> UpdateState(
         Guid workOrderId,
-        WorkOrderState request,
+        [FromBody] UpdateWorkOrderStateRequest request,
         CancellationToken ct)
     {
         var command = new UpdateWorkOrderStateCommand(
             workOrderId,
-            (WorkOrderState)(int)request);
+            (WorkOrderState)(int)request.State);
 
         var result = await sender.Send(command, ct);
 

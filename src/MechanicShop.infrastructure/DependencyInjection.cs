@@ -13,6 +13,9 @@ using MechanicShop.infrastructure.Identity.Policies;
 using Microsoft.Extensions.Caching.Hybrid;
 using MechanicShop.infrastructure.Services;
 using MechanicShop.infrastructure.RealTime;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -42,27 +45,27 @@ public static class DependencyInjection
 
         services.AddScoped<ApplicationDbContextInitialiser>();
 
-        // services.AddAuthentication(options =>
-        // {
-        //     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        //     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        // }).AddJwtBearer(options =>
-        // {
-        //     var jwtSettings = configuration.GetSection("JwtSettings");
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            var jwtSettings = configuration.GetSection("JwtSettings");
 
-        //     options.TokenValidationParameters = new TokenValidationParameters
-        //     {
-        //         ValidateIssuer = true,
-        //         ValidateAudience = true,
-        //         ValidateLifetime = true,
-        //         ClockSkew = TimeSpan.Zero,
-        //         ValidateIssuerSigningKey = true,
-        //         ValidIssuer = jwtSettings["Issuer"],
-        //         ValidAudience = jwtSettings["Audience"],
-        //         IssuerSigningKey = new SymmetricSecurityKey(
-        //                Encoding.UTF8.GetBytes(jwtSettings["Secret"]!)),
-        //     };
-        // });
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings["Issuer"],
+                ValidAudience = jwtSettings["Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                       Encoding.UTF8.GetBytes(jwtSettings["Secret"]!)),
+            };
+        });
 
         services
         .AddIdentityCore<AppUser>(options =>
