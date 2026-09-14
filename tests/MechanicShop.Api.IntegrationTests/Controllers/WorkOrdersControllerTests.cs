@@ -297,6 +297,38 @@ public class WorkOrdersControllerTests(WebAppFactory webAppFactory)
     }
 
     [Fact]
+    public async Task RelocateWorkOrder_WithoutManagerRole_ShouldReturnForbidden()
+    {
+        var token = await _client.GenerateTokenAsync(TestUsers.Labor01);
+
+        _client.SetAuthorizationHeader(token);
+
+        var request = new RelocateWorkOrderRequest
+        {
+            NewStartAtUtc = DateTime.UtcNow.AddHours(2),
+            NewSpot = (MecanicShop.Contracts.Common.Spot)Spot.B
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/v1.0/workorders/{Guid.NewGuid()}/relocation", request);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task RelocateWorkOrder_WithoutAuthentication_ShouldReturnUnauthorized()
+    {
+        var request = new RelocateWorkOrderRequest
+        {
+            NewStartAtUtc = DateTime.UtcNow.AddHours(2),
+            NewSpot = (MecanicShop.Contracts.Common.Spot)Spot.B
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/v1.0/workorders/{Guid.NewGuid()}/relocation", request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task AssignLabor_WithValidRequest_ShouldAssignLabor()
     {
         var token = await _client.GenerateTokenAsync(TestUsers.Manager);
@@ -348,6 +380,20 @@ public class WorkOrdersControllerTests(WebAppFactory webAppFactory)
         var response = await _client.PutAsJsonAsync($"/api/v1.0/workorders/{Guid.NewGuid()}/labor", request);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AssignLabor_WithoutManagerRole_ShouldReturnForbidden()
+    {
+        var token = await _client.GenerateTokenAsync(TestUsers.Labor01);
+
+        _client.SetAuthorizationHeader(token);
+
+        var request = new AssignLaborRequest { LaborId = TestUsers.Labor02.Id };
+
+        var response = await _client.PutAsJsonAsync($"/api/v1.0/workorders/{Guid.NewGuid()}/labor", request);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
@@ -427,7 +473,7 @@ public class WorkOrdersControllerTests(WebAppFactory webAppFactory)
     }
 
     [Fact]
-    public async Task UpdateWorkOrderState_AsLabor_WithoutSelfScopedAccess_ShouldSucceed()
+    public async Task UpdateWorkOrderState_AsLabor_WithoutSelfScopedAccess_ShouldReturnForbidden()
     {
         var token = await _client.GenerateTokenAsync(TestUsers.Labor02);
 
@@ -614,21 +660,37 @@ public class WorkOrdersControllerTests(WebAppFactory webAppFactory)
 
         _client.SetAuthorizationHeader(token);
 
-        var workOrder = WorkOrderTestDataBuilder.Create()
-                       .ForToday()
-                       .WithRepairTasks(await _context.RepairTasks.Take(1).ToListAsync())
-                       .WithVehicle(_context.Vehicles.FirstOrDefault()!.Id)
+        var vehicleId = _context.Vehicles.FirstOrDefault()!.Id;
+        var repairTasks = await _context.RepairTasks.Take(1).ToListAsync();
+
+        var labor01WorkOrder = WorkOrderTestDataBuilder.Create()
+                       .ForToday(new TimeOnly(9, 0), new TimeOnly(10, 0))
+                       .AtSpot(Spot.A)
+                       .WithRepairTasks(repairTasks)
+                       .WithVehicle(vehicleId)
                        .WithLabor(TestUsers.Labor01.Id)
                        .Build();
 
-        _context.WorkOrders.Add(workOrder);
+        var labor02WorkOrder = WorkOrderTestDataBuilder.Create()
+                       .ForToday(new TimeOnly(9, 0), new TimeOnly(10, 0))
+                       .AtSpot(Spot.B)
+                       .WithRepairTasks(repairTasks)
+                       .WithVehicle(vehicleId)
+                       .WithLabor(TestUsers.Labor02.Id)
+                       .Build();
+
+        _context.WorkOrders.AddRange(labor01WorkOrder, labor02WorkOrder);
         await _context.SaveChangesAsync(default);
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var labor01Id = Guid.Parse(TestUsers.Labor01.Id);
+        var labor02Id = Guid.Parse(TestUsers.Labor02.Id);
 
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1.0/workorders/schedule/{today:yyyy-MM-dd}");
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"/api/v1.0/workorders/schedule/{today:yyyy-MM-dd}?laborId={labor01Id}");
 
             request.Headers.Add("X-TimeZone", "America/Montreal");
 
@@ -640,10 +702,15 @@ public class WorkOrdersControllerTests(WebAppFactory webAppFactory)
 
             Assert.NotNull(result);
             Assert.NotNull(result.Spots);
+
+            var occupiedSlots = result.Spots.SelectMany(s => s.Slots).Where(s => s.IsOccupied).ToList();
+
+            Assert.Contains(occupiedSlots, s => s.WorkOrderId == labor01WorkOrder.Id && s.Labor!.LaborId == labor01Id);
+            Assert.DoesNotContain(occupiedSlots, s => s.WorkOrderId == labor02WorkOrder.Id);
         }
         finally
         {
-            _context.WorkOrders.Remove(workOrder);
+            _context.WorkOrders.RemoveRange(labor01WorkOrder, labor02WorkOrder);
             await _context.SaveChangesAsync(default);
         }
     }
