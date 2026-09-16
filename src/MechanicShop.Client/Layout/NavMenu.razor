@@ -1,27 +1,75 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">MechanicShop.Client</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
+﻿<div class="ms-brand">
+    <span class="ms-brand__logo" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8.002 0a.5.5 0 0 1 .414.219l.94 1.403a.5.5 0 0 1-.059.605l-.013.013a.98.98 0 0 0-.265.497l-1.02 3.253.517 1.093a.5.5 0 0 0 .46.293h2.428a.5.5 0 0 1 .43.256l1.513 2.613a.5.5 0 0 1 .093.295v2.53a.5.5 0 0 1-.5.5H12a.5.5 0 0 1-.5-.5V9.84l-.511-.882-.72 1.992a.5.5 0 0 1-.34.312l-2.081.59a1.5 1.5 0 0 1-2.013-1.108l-.437-2.485a.5.5 0 0 1 .155-.474l1.197-1.018-.662-2.844A.5.5 0 0 1 6.365 4.4L9.5 4.5a.5.5 0 0 0 .48-.714l-.803-1.694a.5.5 0 0 1-.022-.414l.317-.953a.5.5 0 0 0 .533.073Zm-.911 3.161a.5.5 0 0 0-.02.295l.29 1.247-.796.678a.5.5 0 0 0-.052.158l-.441 2.5.738 1.309a.5.5 0 0 1 .088.292v2.29a.5.5 0 0 0 .5.5h.9a.5.5 0 0 1 .5.5v1.294a.5.5 0 0 0 .5.5h1.987a.5.5 0 0 0 .5-.5v-1.7a.5.5 0 0 1 .195-.39l1.857-1.42v-2.39a.5.5 0 0 0-.103-.302l-1.295-1.02-1.61-3.814a.5.5 0 0 0-.43-.285Z" />
+        </svg>
+    </span>
+    <span class="ms-brand__name">MechanicShop</span>
+    <button title="Toggle navigation menu" class="ms-brand__toggler" @onclick="ToggleNavMenu" aria-expanded="@(!collapseNavMenu)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5Zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5Zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5Z" />
+        </svg>
+    </button>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+<div class="@NavMenuCssClass ms-nav">
+    <nav class="ms-nav__list">
+        <div class="ms-nav__section">
+            <div class="ms-nav__heading">Overview</div>
+            <NavLink class="ms-nav__link" href="" Match="NavLinkMatch.All">
+                <svg class="ms-nav__icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z" />
+                    <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z" />
+                </svg>
+                Dashboard
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+
+        <div class="ms-nav__section">
+            <div class="ms-nav__heading">Operations</div>
+            <NavLink class="ms-nav__link" href="work-orders">
+                <svg class="ms-nav__icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M2.5 0a.5.5 0 0 0-.5.5v1.293l-.146.147a.5.5 0 0 0-.354.353V16h12.5a1.5 1.5 0 0 0 1.5-1.5V.5a.5.5 0 0 0-.5-.5H2.5Zm11 5H2.5V1h11v4ZM3.5 8h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1Zm0 2h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1Zm4 0h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1 0-1Zm-4 2h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1Zm5-6h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1 0-1Zm-1 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5Z" />
+                </svg>
+                Work Orders
+            </NavLink>
+            <NavLink class="ms-nav__link" href="schedule">
+                <svg class="ms-nav__icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5ZM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1Zm3.5 5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1Zm0 2h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1Zm0-4h.01a.5.5 0 0 1 0 1H4.5a.5.5 0 0 1 0-1Zm2.5 0h.01a.5.5 0 0 1 0 1H7a.5.5 0 0 1 0-1Zm2.5 0h.01a.5.5 0 0 1 0 1h-.01a.5.5 0 0 1 0-1Zm2.5 0h.01a.5.5 0 0 1 0 1h-.01a.5.5 0 0 1 0-1Z" />
+                </svg>
+                Schedule & Spots
+            </NavLink>
+            <NavLink class="ms-nav__link" href="repair-tasks">
+                <svg class="ms-nav__icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M9.405 1.05c.413-1.319 1.657-1.335 1.63-.035L11 2.5l.318 1.485.477 2.239.58 2.697a2.6 2.6 0 0 1-.579 2.187 2.6 2.6 0 0 1-.565.447l-.03.017a1 1 0 0 0-.2.165l-.103.13.33.103 1.178 1.363a.5.5 0 0 1-.38.818H8.444a.5.5 0 0 1-.38-.818l1.178-1.363.33-.103-.103-.13a1 1 0 0 0-.2-.165l-.031-.017a2.6 2.6 0 0 1-.564-.447 2.6 2.6 0 0 1-.579-2.187l.58-2.697.477-2.238L11 2.5c.025-.991-.148-1.334 1.405-1.45A.5.5 0 0 0 12.1.66L11.656 2.16 17 6.939a1 1 0 0 1-.04 1.412l-1.746 1.703a.63.63 0 0 0 .002.86l.634.625a.6.6 0 0 0 .87-.014l1.665-1.713V7.547l-.065-.164a1 1 0 0 0-.477-.42l-5.908-3.986A.5.5 0 0 0 11 3.299l.068-.387a.5.5 0 0 0-.356-.61l-.244-.06Z" />
+                </svg>
+                Repair Tasks
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+
+        <div class="ms-nav__section">
+            <div class="ms-nav__heading">People</div>
+            <NavLink class="ms-nav__link" href="customers">
+                <svg class="ms-nav__icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm4 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 6c0 .36-.074.735-.184 1.108a2.97 2.97 0 0 1-1.002.402A5.03 5.03 0 0 1 11.5 6.9l.026-.04.007-.006.015-.02a1 1 0 0 1 .658-.34.996.996 0 0 1 .654.06A1.004 1.004 0 0 1 13.5 7ZM14 15a2 2 0 0 1-2-2c0-1.557-.391-2.703-.894-3.2a3.998 3.998 0 0 0-1.76-1.114A4.98 4.98 0 0 0 8 8a5 5 0 0 0-2.346.686 4 4 0 0 0-1.76 1.114C3.391 10.297 3 11.443 3 13a2 2 0 0 1-2 2h13ZM5 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
+                </svg>
+                Customers & Vehicles
+            </NavLink>
+            <NavLink class="ms-nav__link" href="labors">
+                <svg class="ms-nav__icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4Zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10Z" />
+                </svg>
+                Labor
+            </NavLink>
+        </div>
+
+        <div class="ms-nav__section">
+            <div class="ms-nav__heading">Finance</div>
+            <NavLink class="ms-nav__link" href="billing">
+                <svg class="ms-nav__icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M14 2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2ZM4 1h8a1 1 0 0 1 1 1v.5H3V2a1 1 0 0 1 1-1Zm0 3h8v.5H3V4a1 1 0 0 1 0 0Zm7.5 8H7a.5.5 0 0 1 0-1h4.5a.5.5 0 0 1 0 1ZM12 9.5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1 0-1h5a.5.5 0 0 1 .5.5Z" />
+                </svg>
+                Billing & Invoices
             </NavLink>
         </div>
     </nav>
@@ -30,7 +78,7 @@
 @code {
     private bool collapseNavMenu = true;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string? NavMenuCssClass => collapseNavMenu ? "ms-nav--collapsed" : null;
 
     private void ToggleNavMenu()
     {

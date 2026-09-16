@@ -1,16 +1,65 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
+
+<div class="ms-shell">
+    <aside class="ms-sidebar">
         <NavMenu />
+    </aside>
+
+    <div class="ms-main">
+        <header class="ms-topbar">
+            <div class="ms-topbar__title">
+                <h1>@PageTitle</h1>
+            </div>
+            <div class="ms-topbar__actions">
+                <a class="btn btn-ms ms-topbar__action" href="work-orders">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 4.095 0 3.055 0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1c0 1.055-1.266 2.095-2.942 2.723-.143.865-.698 1.723-1.464 2.383A5.53 5.53 0 0 1 8 2ZM8.5 3.5V4h-.988v-.5h.988Zm-.99 1.5h.99v.5h-.99V5Zm.99-1v-.5h-.99V5h.99Z" />
+                    </svg>
+                    New Work Order
+                </a>
+                <div class="ms-user" title="Signed in user">
+                    <div class="ms-user__avatar">MS</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="ms-content">
+            <article class="ms-content__article">
+                @Body
+            </article>
+        </main>
     </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
 </div>
+
+@code {
+    private readonly record struct TitleMapping(string Route, string Title);
+
+    private static readonly TitleMapping[] Titles =
+    {
+        new("", "Dashboard"),
+        new("dashboard", "Dashboard"),
+        new("work-orders", "Work Orders"),
+        new("schedule", "Schedule & Spots"),
+        new("repair-tasks", "Repair Tasks"),
+        new("customers", "Customers & Vehicles"),
+        new("labors", "Labor"),
+        new("billing", "Billing & Invoices"),
+    };
+
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private string PageTitle
+    {
+        get
+        {
+            var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '/')[0];
+            var match = Titles.FirstOrDefault(t => string.Equals(t.Route, path, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrEmpty(match.Title))
+            {
+                return match.Title;
+            }
+
+            return string.IsNullOrWhiteSpace(path) ? "Dashboard" : char.ToUpperInvariant(path[0]) + path[1..].Replace("-", " ");
+        }
+    }
+}
