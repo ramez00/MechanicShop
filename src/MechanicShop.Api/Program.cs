@@ -4,8 +4,12 @@ using MechanicShop.infrastructure;
 using MechanicShop.infrastructure.Data;
 using MechanicShop.infrastructure.RealTime;
 using MechanicShop.infrastructure.Settings;
+using MechanicShop.Api.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents();
 
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 
@@ -38,6 +42,10 @@ app.UseExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode()
+    .AddAdditionalAssemblies(typeof(MechanicShop.Client._Imports).Assembly);
 
 app.MapHub<WorkOrderHub>("/hubs/workorders");
 
