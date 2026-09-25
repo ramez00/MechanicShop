@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 namespace MechanicShop.Client.Services;
 using MechanicShop.Client.Models;
+using MechanicShop.Contracts.Requests.Customers;
+
 
 public sealed class ServiceApi(HttpClient httpClient)
 {
@@ -33,6 +35,91 @@ public sealed class ServiceApi(HttpClient httpClient)
 
     public Task<ApiResult> DeleteAsync(string requestUri, CancellationToken cancellationToken = default) =>
         AsVoidResult(SendAsync<object?>(() => new HttpRequestMessage(HttpMethod.Delete, requestUri), cancellationToken));
+
+    public async Task<ApiResult<List<CustomerModel>>> GetCustomersAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("api/v1/customers");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var customers = await response.Content.ReadFromJsonAsync<List<CustomerModel>>();
+                return ApiResult<List<CustomerModel>>.Success(customers ?? []);
+            }
+
+            return await HandleErrorResponseAsync<List<CustomerModel>>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<List<CustomerModel>>(ex, "Failed to retrieve customers");
+        }
+    }
+    public async Task<ApiResult<CustomerModel>> CreateCustomerAsync(CreateCustomerRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/v1/customers", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var customer = await response.Content.ReadFromJsonAsync<CustomerModel>();
+
+                if (customer is null)
+                {
+                    return ApiResult<CustomerModel>.Failure("Customer response was null.");
+                }
+
+                return ApiResult<CustomerModel>.Success(customer);
+            }
+
+            return await HandleErrorResponseAsync<CustomerModel>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<CustomerModel>(ex, "Failed to create customer.");
+        }
+    }
+
+    public async Task<ApiResult> DeleteCustomerAsync(Guid customerId)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/v1/customers/{customerId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Success();
+            }
+
+            return await HandleErrorResponseAsync(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync(ex, $"Failed to delete customer {customerId}");
+        }
+    }
+
+     public async Task<ApiResult<CustomerModel>> UpdateCustomerAsync(Guid customerId, UpdateCustomerRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/v1/customers/{customerId}", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var customer = await response.Content.ReadFromJsonAsync<CustomerModel>();
+                return ApiResult<CustomerModel>.Success(customer!);
+            }
+
+            return await HandleErrorResponseAsync<CustomerModel>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<CustomerModel>(ex, $"Failed to update customer {customerId}");
+        }
+    }
+
 
     public async Task<ApiResult<byte[]>> GetInvoicePdfAsync(Guid invoiceId)
     {
