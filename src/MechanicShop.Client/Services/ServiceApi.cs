@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-
 namespace MechanicShop.Client.Services;
+using MechanicShop.Client.Models;
 
 public sealed class ServiceApi(HttpClient httpClient)
 {
@@ -28,9 +28,119 @@ public sealed class ServiceApi(HttpClient httpClient)
     public Task<ApiResult> PutAsync<TRequest>(string requestUri, TRequest body, CancellationToken cancellationToken = default) =>
         AsVoidResult(SendAsync<object?>(() => CreateJsonRequest(HttpMethod.Put, requestUri, body), cancellationToken));
 
+    public Task<ApiResult> PutAsync(string requestUri, CancellationToken cancellationToken = default) =>
+        AsVoidResult(SendAsync<object?>(() => new HttpRequestMessage(HttpMethod.Put, requestUri), cancellationToken));
+
     public Task<ApiResult> DeleteAsync(string requestUri, CancellationToken cancellationToken = default) =>
         AsVoidResult(SendAsync<object?>(() => new HttpRequestMessage(HttpMethod.Delete, requestUri), cancellationToken));
 
+    public async Task<ApiResult<byte[]>> GetInvoicePdfAsync(Guid invoiceId)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/v1/invoices/{invoiceId}/pdf");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var pdfBytes = await response.Content.ReadAsByteArrayAsync();
+                return ApiResult<byte[]>.Success(pdfBytes);
+            }
+
+            return await HandleErrorResponseAsync<byte[]>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<byte[]>(ex, $"Failed to retrieve PDF for invoice {invoiceId}");
+        }
+    }
+    public async Task<ApiResult<byte[]>> GetBytesAsync(string requestUri, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return await ToFailureAsync<byte[]>(response, cancellationToken);
+            }
+
+            var data = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+
+            return ApiResult<byte[]>.Success(data);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return ApiResult<byte[]>.Failure(ex.Message);
+        }
+    }
+
+    private static Task<ApiResult> HandleErrorResponseAsync(HttpResponseMessage response) =>
+        HandleErrorResponseAsync<object>(response)
+            .ContinueWith(t =>
+                ApiResult.Failure(
+                    t.Result.ErrorMessage,
+                    t.Result.ErrorDetail,
+                    t.Result.StatusCode,
+                    t.Result.ValidationErrors));
+
+    public async Task<ApiResult> SettleInvoice(Guid invoiceId)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsync($"api/v1/invoices/{invoiceId}/payments", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Success();
+            }
+
+            return await HandleErrorResponseAsync(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync(ex, $"Failed to settle invoice {invoiceId}");
+        }
+    }
+    public async Task<ApiResult<InvoiceModel>> GetInvoiceAsync(Guid invoiceId)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/v1/invoices/{invoiceId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var invoice = await response.Content.ReadFromJsonAsync<InvoiceModel>();
+                return ApiResult<InvoiceModel>.Success(invoice!);
+            }
+
+            return await HandleErrorResponseAsync<InvoiceModel>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<InvoiceModel>(ex, $"Failed to retrieve invoice {invoiceId}");
+        }
+    }
+
+    private static Task<ApiResult<T>> HandleExceptionAsync<T>(Exception ex, string message) =>
+      Task.FromResult(ex switch
+      {
+          HttpRequestException => ApiResult<T>.Failure($"Network error occurred. {message}"),
+          TaskCanceledException => ApiResult<T>.Failure($"Request timed out. {message}"),
+          _ => ApiResult<T>.Failure($"An unexpected error occurred. {message}")
+      });
+
+    private static Task<ApiResult> HandleExceptionAsync(Exception ex, string message) =>
+        HandleExceptionAsync<object>(ex, message).ContinueWith(t =>
+            ApiResult.Failure(
+                t.Result.ErrorMessage,
+                t.Result.ErrorDetail,
+                t.Result.StatusCode,
+                t.Result.ValidationErrors));
     private async Task<ApiResult<TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory, CancellationToken cancellationToken)
     {
         try
@@ -97,6 +207,7 @@ public sealed class ServiceApi(HttpClient httpClient)
             statusCode);
     }
 
+
     private static async Task<T?> TryReadAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken) where T : class
     {
         if (response.Content.Headers.ContentLength is null or 0)
@@ -117,6 +228,7 @@ public sealed class ServiceApi(HttpClient httpClient)
     private static HttpRequestMessage CreateJsonRequest<TRequest>(HttpMethod method, string requestUri, TRequest body) =>
         new(method, requestUri) { Content = JsonContent.Create(body, options: JsonOptions) };
 
+
     private class ProblemDetailsDto
     {
         public string? Title { get; set; }
@@ -130,4 +242,54 @@ public sealed class ServiceApi(HttpClient httpClient)
     {
         public Dictionary<string, string[]>? Errors { get; set; }
     }
+
+        private static string GetFriendlyErrorMessage(HttpStatusCode statusCode)
+    {
+        return statusCode switch
+        {
+            HttpStatusCode.BadRequest => "Invalid request. Please check your input and try again.",
+            HttpStatusCode.Unauthorized => "You are not authorized to perform this action.",
+            HttpStatusCode.Forbidden => "You don't have permission to perform this action.",
+            HttpStatusCode.NotFound => "The requested resource was not found.",
+            HttpStatusCode.Conflict => "The operation conflicts with the current state of the resource.",
+            HttpStatusCode.UnprocessableEntity => "The request contains invalid data.",
+            HttpStatusCode.InternalServerError => "A server error occurred. Please try again later.",
+            HttpStatusCode.BadGateway => "Service temporarily unavailable. Please try again later.",
+            HttpStatusCode.ServiceUnavailable => "Service temporarily unavailable. Please try again later.",
+            HttpStatusCode.GatewayTimeout => "The request timed out. Please try again.",
+            _ => "An error occurred while processing your request."
+        };
+    }
+
+    private static async Task<ApiResult<T>> HandleErrorResponseAsync<T>(HttpResponseMessage response)
+    {
+        string content = await response.Content.ReadAsStringAsync();
+
+        try
+        {
+            var problemDetails = JsonSerializer.Deserialize<ProblemDetails>(content, options: new() { PropertyNameCaseInsensitive = true });
+
+            if (problemDetails is not null)
+            {
+                return ApiResult<T>.Failure(
+                    message: problemDetails.Title ?? "An error occurred",
+                    detail: problemDetails.Detail ?? "Error",
+                    statusCode: problemDetails.Status ?? (int)response.StatusCode,
+                    validationErrors: problemDetails.Errors);
+            }
+
+            return ApiResult<T>.Failure(
+                message: GetFriendlyErrorMessage(response.StatusCode),
+                detail: content,
+                statusCode: (int)response.StatusCode);
+        }
+        catch (JsonException)
+        {
+            return ApiResult<T>.Failure(
+                message: GetFriendlyErrorMessage(response.StatusCode),
+                detail: content,
+                statusCode: (int)response.StatusCode);
+        }
+    }
+
 }
