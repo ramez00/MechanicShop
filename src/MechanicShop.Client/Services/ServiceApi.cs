@@ -4,11 +4,15 @@ using System.Text.Json;
 namespace MechanicShop.Client.Services;
 using MechanicShop.Client.Models;
 using MechanicShop.Contracts.Requests.Customers;
+using MechanicShop.Contracts.Requests.WorkOrders;
+using MechanicShop.Contracts.Responses;
 
-
-public sealed class ServiceApi(HttpClient httpClient)
+public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneService)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly TimeZoneService _timeZoneService = timeZoneService;
+
 
     private readonly HttpClient _httpClient = httpClient;
 
@@ -78,6 +82,284 @@ public sealed class ServiceApi(HttpClient httpClient)
         catch (Exception ex)
         {
             return await HandleExceptionAsync<CustomerModel>(ex, "Failed to create customer.");
+        }
+    }
+
+    public async Task<ApiResult> RelocateWorkOrderAsync(Guid workOrderId, RelocateWorkOrderRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/v1/WorkOrders/{workOrderId}/relocation", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Success();
+            }
+
+            return await HandleErrorResponseAsync(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync(ex, $"Failed to relocate work order timing for {workOrderId}");
+        }
+    }
+
+
+    public async Task<ApiResult> UpdateWorkOrderStateAsync(Guid workOrderId, UpdateWorkOrderStateRequest statusUpdateRequest)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/v1/WorkOrders/{workOrderId}/state", statusUpdateRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Success();
+            }
+
+            return await HandleErrorResponseAsync(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync(ex, $"Failed to update work order state for {workOrderId}");
+        }
+    }
+
+    public async Task<ApiResult> UpdateWorkOrderRepairTasksAsync(Guid workOrderId, ModifyRepairTaskRequest updateWorkOrderRepairTasks)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/v1/WorkOrders/{workOrderId}/repair-task", updateWorkOrderRepairTasks);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Success();
+            }
+
+            return await HandleErrorResponseAsync(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync(ex, $"Failed to update work order repair tasks for {workOrderId}");
+        }
+    }
+
+     public async Task<ApiResult> UpdateWorkOrderLaborAsync(Guid workOrderId, AssignLaborRequest laborUpdateRequest)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/v1/WorkOrders/{workOrderId}/labor", laborUpdateRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Success();
+            }
+
+            return await HandleErrorResponseAsync(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync(ex, $"Failed to update work order labor for {workOrderId}");
+        }
+    }
+
+    public async Task<ApiResult> CreateWorkOrderAsync(CreateWorkOrderRequest workOrderRequest)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/v1/WorkOrders", workOrderRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Success();
+            }
+
+            return await HandleErrorResponseAsync(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync(ex, "Failed to create work order");
+        }
+    }
+     public async Task<ApiResult<CustomerModel>> GetCustomerAsync(Guid customerId)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/v1/customers/{customerId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var customer = await response.Content.ReadFromJsonAsync<CustomerModel>();
+                return ApiResult<CustomerModel>.Success(customer!);
+            }
+
+            return await HandleErrorResponseAsync<CustomerModel>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<CustomerModel>(ex, $"Failed to retrieve customer {customerId}");
+        }
+    }
+
+    public async Task<ApiResult<List<VehicleModel>>> GetVehiclesByCustomerIdAsync(Guid customerId)
+    {
+        try
+        {
+            var customerResult = await GetCustomerAsync(customerId);
+
+            if (!customerResult.IsSuccess)
+            {
+                return ApiResult<List<VehicleModel>>.Failure(
+                    customerResult.ErrorMessage,
+                    customerResult.ErrorDetail,
+                    customerResult.StatusCode,
+                    customerResult.ValidationErrors);
+            }
+
+            var vehicles = customerResult.Data?.Vehicles ?? [];
+            return ApiResult<List<VehicleModel>>.Success(vehicles);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<List<VehicleModel>>(ex, $"Failed to retrieve vehicles for customer {customerId}");
+        }
+    }
+
+
+     // Repair Task methods
+    public async Task<ApiResult<List<RepairTaskModel>>> GetRepairTasksAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("api/v1/repair-tasks");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var repairTasks = await response.Content.ReadFromJsonAsync<List<RepairTaskModel>>();
+                return ApiResult<List<RepairTaskModel>>.Success(repairTasks ?? []);
+            }
+
+            return await HandleErrorResponseAsync<List<RepairTaskModel>>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<List<RepairTaskModel>>(ex, "Failed to retrieve repair tasks");
+        }
+    }
+
+
+    public async Task<ApiResult> DeleteWorkOrderAsync(Guid workOrderId)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/v1/WorkOrders/{workOrderId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Success();
+            }
+
+            return await HandleErrorResponseAsync(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync(ex, $"Failed to delete work order {workOrderId}");
+        }
+    }
+
+     public async Task<ApiResult<ScheduleModel>> GetDailySchedule(DateOnly date, Guid? laborId = null)
+    {
+        try
+        {
+            var url = $"api/v1/workorders/schedule/{date:yyyy-MM-dd}";
+            if (laborId.HasValue)
+            {
+                url += $"?laborId={laborId.Value}";
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+            var tz = await _timeZoneService.GetLocalTimeZoneAsync();
+
+            request.Headers.Add("X-TimeZone", tz);
+
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None)
+                                            .ConfigureAwait(false);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var schedule = await response.Content.ReadFromJsonAsync<ScheduleModel>().ConfigureAwait(false);
+
+                if (schedule is null)
+                {
+                    return ApiResult<ScheduleModel>.Failure("Schedule data is null");
+                }
+
+                try
+                {
+                    var timeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Montreal");
+
+                    foreach (var slot in schedule.Spots.SelectMany(s => s.Slots))
+                    {
+                        slot.StartAt = TimeZoneInfo.ConvertTime(slot.StartAt, timeZone);
+                        slot.EndAt = TimeZoneInfo.ConvertTime(slot.EndAt, timeZone);
+                    }
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                    return ApiResult<ScheduleModel>.Failure("Time zone 'America/Montreal' not found on this system.");
+                }
+
+                return ApiResult<ScheduleModel>.Success(schedule);
+            }
+
+            return await HandleErrorResponseAsync<ScheduleModel>(response).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<ScheduleModel>(ex, $"Failed to retrieve schedule for {date}")
+                         .ConfigureAwait(false);
+        }
+    }
+
+    public async Task<ApiResult<List<LaborModel>>> GetLaborsAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("api/v1/labors");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var labors = await response.Content.ReadFromJsonAsync<List<LaborModel>>();
+                return ApiResult<List<LaborModel>>.Success(labors ?? []);
+            }
+
+            return await HandleErrorResponseAsync<List<LaborModel>>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<List<LaborModel>>(ex, "Failed to retrieve labors");
+        }
+    }
+
+
+    public async Task<ApiResult<OperatingHoursResponse>> GetOperateHoursAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("api/settings/operating-hours");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var operateHours = await response.Content.ReadFromJsonAsync<OperatingHoursResponse>();
+
+                return ApiResult<OperatingHoursResponse>.Success(operateHours!);
+            }
+
+            return await HandleErrorResponseAsync<OperatingHoursResponse>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<OperatingHoursResponse>(ex, "Failed to retrieve operating hours");
         }
     }
 
