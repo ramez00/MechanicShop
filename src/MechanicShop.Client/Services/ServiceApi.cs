@@ -4,6 +4,7 @@ using System.Text.Json;
 namespace MechanicShop.Client.Services;
 using MechanicShop.Client.Models;
 using MechanicShop.Contracts.Requests.Customers;
+using MechanicShop.Contracts.Requests.RepairTasks;
 using MechanicShop.Contracts.Requests.WorkOrders;
 using MechanicShop.Contracts.Responses;
 
@@ -39,6 +40,64 @@ public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneSe
 
     public Task<ApiResult> DeleteAsync(string requestUri, CancellationToken cancellationToken = default) =>
         AsVoidResult(SendAsync<object?>(() => new HttpRequestMessage(HttpMethod.Delete, requestUri), cancellationToken));
+
+   public async Task<ApiResult> DeleteRepairTaskAsync(Guid repairTaskId)   
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/v1/repair-tasks/{repairTaskId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return ApiResult.Success();
+            }
+
+            return await HandleErrorResponseAsync(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync(ex, $"Failed to delete repair task {repairTaskId}");
+        }
+    }
+    public async Task<ApiResult<RepairTaskModel>> CreateRepairTaskAsync(CreateRepairTaskRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/v1/repair-tasks", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var repairTask = await response.Content.ReadFromJsonAsync<RepairTaskModel>();
+                return ApiResult<RepairTaskModel>.Success(repairTask!);
+            }
+
+            return await HandleErrorResponseAsync<RepairTaskModel>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<RepairTaskModel>(ex, "Failed to create repair task");
+        }
+    }
+
+    public async Task<ApiResult<RepairTaskModel>> UpdateRepairTaskAsync(Guid repairTaskId, UpdateRepairTaskRequest request)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/v1/repair-tasks/{repairTaskId}", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var repairTask = await response.Content.ReadFromJsonAsync<RepairTaskModel>();
+                return ApiResult<RepairTaskModel>.Success(repairTask!);
+            }
+
+            return await HandleErrorResponseAsync<RepairTaskModel>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<RepairTaskModel>(ex, $"Failed to update repair task {repairTaskId}");
+        }
+    }
 
     public async Task<ApiResult<List<CustomerModel>>> GetCustomersAsync()
     {
