@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 namespace MechanicShop.Client.Services;
+
+using MechanicShop.Client.Extensions;
+
 using MechanicShop.Client.Models;
 using MechanicShop.Contracts.Requests.Customers;
 using MechanicShop.Contracts.Requests.RepairTasks;
@@ -40,6 +43,130 @@ public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneSe
 
     public Task<ApiResult> DeleteAsync(string requestUri, CancellationToken cancellationToken = default) =>
         AsVoidResult(SendAsync<object?>(() => new HttpRequestMessage(HttpMethod.Delete, requestUri), cancellationToken));
+    
+    public async Task<ApiResult<InvoiceModel>> IssueInvoiceAsync(Guid workorderId)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"api/v1/invoices/workorders/{workorderId}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var invoice = await response.Content.ReadFromJsonAsync<InvoiceModel>();
+
+                if (invoice == null)
+                {
+                    return ApiResult<InvoiceModel>.Failure("Invoice response was null");
+                }
+
+                return ApiResult<InvoiceModel>.Success(invoice);
+            }
+
+            return await HandleErrorResponseAsync<InvoiceModel>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<InvoiceModel>(ex, $"Failed to issue invoice for work order {workorderId}");
+        }
+    }
+    private static string BuildQueryString(WorkOrderFilterRequest filterRequest, PageRequest pageRequest)
+    {
+        var queryParams = new List<string>
+        {
+            $"page={pageRequest.Page}",
+            $"pageSize={pageRequest.PageSize}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(filterRequest.SearchTerm))
+        {
+            queryParams.Add($"searchTerm={Uri.EscapeDataString(filterRequest.SearchTerm)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterRequest.SortColumn))
+        {
+            queryParams.Add($"sortColumn={Uri.EscapeDataString(filterRequest.SortColumn)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterRequest.SortDirection))
+        {
+            queryParams.Add($"sortDirection={Uri.EscapeDataString(filterRequest.SortDirection)}");
+        }
+
+        if (filterRequest.State.HasValue)
+        {
+            queryParams.Add($"state={filterRequest.State}");
+        }
+
+        if (filterRequest.VehicleId.HasValue && filterRequest.VehicleId != Guid.Empty)
+        {
+            queryParams.Add($"vehicleId={filterRequest.VehicleId}");
+        }
+
+        if (filterRequest.LaborId.HasValue && filterRequest.LaborId != Guid.Empty)
+        {
+            queryParams.Add($"laborId={filterRequest.LaborId}");
+        }
+
+        if (filterRequest.StartDateFrom.HasValue)
+        {
+            queryParams.Add($"startDateFrom={filterRequest.StartDateFrom:yyyy-MM-ddTHH:mm:ss}");
+        }
+
+        if (filterRequest.StartDateTo.HasValue)
+        {
+            queryParams.Add($"startDateTo={filterRequest.StartDateTo:yyyy-MM-ddTHH:mm:ss}");
+        }
+
+        if (filterRequest.EndDateFrom.HasValue)
+        {
+            queryParams.Add($"endDateFrom={filterRequest.EndDateFrom:yyyy-MM-ddTHH:mm:ss}");
+        }
+
+        if (filterRequest.EndDateTo.HasValue)
+        {
+            queryParams.Add($"endDateTo={filterRequest.EndDateTo:yyyy-MM-ddTHH:mm:ss}");
+        }
+
+        if (filterRequest.Spot.HasValue)
+        {
+            queryParams.Add($"spot={filterRequest.Spot}");
+        }
+
+        return string.Join("&", queryParams);
+    }
+    
+    public async Task<ApiResult<PaginatedList<WorkOrderListItemModel>>> GetWorkOrdersAsync(
+        WorkOrderFilterRequest request,
+        PageRequest pageRequest,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var queryString = BuildQueryString(request, pageRequest);
+            var url = $"api/v1/WorkOrders?{queryString}";
+
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var workOrders = await response.Content.ReadFromJsonAsync<PaginatedList<WorkOrderListItemModel>>(cancellationToken: cancellationToken);
+
+                workOrders?.Items.ForEach(item => item.AdjustTimeToLocal());
+
+                return ApiResult<PaginatedList<WorkOrderListItemModel>>.Success(workOrders!);
+            }
+
+            return await HandleErrorResponseAsync<PaginatedList<WorkOrderListItemModel>>(response);
+        }
+        catch (OperationCanceledException)
+        {
+            return ApiResult<PaginatedList<WorkOrderListItemModel>>.Failure("Operation was cancelled");
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<PaginatedList<WorkOrderListItemModel>>(ex, "Failed to retrieve work orders");
+        }
+    }
 
    public async Task<ApiResult> DeleteRepairTaskAsync(Guid repairTaskId)   
     {
