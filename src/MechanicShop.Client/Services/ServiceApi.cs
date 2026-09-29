@@ -44,6 +44,28 @@ public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneSe
     public Task<ApiResult> DeleteAsync(string requestUri, CancellationToken cancellationToken = default) =>
         AsVoidResult(SendAsync<object?>(() => new HttpRequestMessage(HttpMethod.Delete, requestUri), cancellationToken));
     
+     public async Task<ApiResult<WorkOrderModel>> GetWorkOrderByIdAsync(Guid workOrderId)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/v1/WorkOrders/{workOrderId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var workOrder = await response.Content.ReadFromJsonAsync<WorkOrderModel>();
+                workOrder?.AdjustTimeToLocal();
+
+                return ApiResult<WorkOrderModel>.Success(workOrder!);
+            }
+
+            return await HandleErrorResponseAsync<WorkOrderModel>(response);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<WorkOrderModel>(ex, $"Failed to retrieve work order {workOrderId}");
+        }
+    }
+    
     public async Task<ApiResult<InvoiceModel>> IssueInvoiceAsync(Guid workorderId)
     {
         try
@@ -134,7 +156,7 @@ public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneSe
 
         return string.Join("&", queryParams);
     }
-    
+
     public async Task<ApiResult<PaginatedList<WorkOrderListItemModel>>> GetWorkOrdersAsync(
         WorkOrderFilterRequest request,
         PageRequest pageRequest,
