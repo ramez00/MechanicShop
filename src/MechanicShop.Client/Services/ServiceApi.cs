@@ -44,6 +44,34 @@ public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneSe
     public Task<ApiResult> DeleteAsync(string requestUri, CancellationToken cancellationToken = default) =>
         AsVoidResult(SendAsync<object?>(() => new HttpRequestMessage(HttpMethod.Delete, requestUri), cancellationToken));
     
+    public async Task<ApiResult<TodayWorkOrderStatsModel>> GetTodayWorkOrderStatsAsync(DateOnly? date = null)
+    {
+        try
+        {
+            var url = "api/v1/dashboard/stats";
+
+            if (date.HasValue)
+            {
+                url += $"?date={date:yyyy-MM-dd}";
+            }
+
+            var response = await _httpClient.GetFromJsonAsync<TodayWorkOrderStatsModel>(url);
+
+            return ApiResult<TodayWorkOrderStatsModel>.Success(response!);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ApiResult<TodayWorkOrderStatsModel>.Failure(
+                "Network error while fetching work order stats.",
+                ex.Message,
+                (int?)ex.StatusCode ?? 500);
+        }
+        catch (Exception ex)
+        {
+            return await HandleExceptionAsync<TodayWorkOrderStatsModel>(ex, "Unexpected error occurred while fetching dashboard stats.");
+        }
+    }
+
      public async Task<ApiResult<WorkOrderModel>> GetWorkOrderByIdAsync(Guid workOrderId)
     {
         try
