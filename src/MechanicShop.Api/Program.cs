@@ -9,26 +9,12 @@ using MechanicShop.Api.Components;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
-
-builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
-
-builder.Services.AddControllers();
-
-builder.Services.AddApiVersioning(options =>
-{
-    options.DefaultApiVersion = new ApiVersion(1.0);
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ReportApiVersions = true;
-}).AddMvc();
+                .AddInteractiveWebAssemblyComponents();
 
 builder.Services
-        .AddApplicationLayer()
-        .AddInfrastructure(builder.Configuration)
-        .AddSignalR();
-
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails();
+    .AddPresentation(builder.Configuration)
+    .AddApplicationLayer()
+    .AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
@@ -44,7 +30,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorComponents<App>().AllowAnonymous()
-    .AddInteractiveServerRenderMode()
+    .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(MechanicShop.Client._Imports).Assembly);
 
 app.MapHub<WorkOrderHub>("/hubs/workorders");

@@ -21,3 +21,7 @@ global using MechanicShop.Application.Features.RepairTasks.Commands.Update;
 global using MechanicShop.Application.Features.RepairTasks.Queries.GetRepairTasks;
 global using MechanicShop.Application.Features.RepairTasks.Queries.GetRepairTasksById;
 global using MechanicShop.Domain.RepairTasks.Enums;
+global using MechanicShop.Api.OpenApi.Transformers;
+global using OpenTelemetry.Metrics;
+global using OpenTelemetry.Resources;
+global using OpenTelemetry.Trace;
