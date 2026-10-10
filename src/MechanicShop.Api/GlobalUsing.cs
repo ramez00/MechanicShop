@@ -25,3 +25,4 @@ global using MechanicShop.Api.OpenApi.Transformers;
 global using OpenTelemetry.Metrics;
 global using OpenTelemetry.Resources;
 global using OpenTelemetry.Trace;
+global using Scalar.AspNetCore;
