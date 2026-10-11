@@ -50,6 +50,11 @@ public class UpdateCustomerCommandHandler(ILogger<UpdateCustomerCommandHandler> 
         if(updatedCustomer.IsError)
             return updatedCustomer.Errors!;
 
+        var upsertedCars = customer.UpsertParts(customerCars);
+
+        if(upsertedCars.IsError)
+            return upsertedCars.Errors!;
+
         await _context.SaveChangesAsync(cancellationToken);
 
         await _cache.RemoveByTagAsync("customer",cancellationToken);

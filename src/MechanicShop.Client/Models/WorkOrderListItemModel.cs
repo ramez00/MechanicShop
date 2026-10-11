@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 using MecanicShop.Contracts.Common;
 using MechanicShop.Contracts.Common;
 
@@ -7,7 +9,8 @@ public class WorkOrderListItemModel
 {
     public Guid WorkOrderId { get; set; }
     public Guid? InvoiceId { get; set; }
-    public VehicleModel Vehicle { get; set; } = default!;
+    [JsonPropertyName("car")]
+    public VehicleModel Vehicle{ get; set; } = default!;
     public string? Customer { get; set; }
     public string? Labor { get; set; }
     public WorkOrderState State { get; set; }

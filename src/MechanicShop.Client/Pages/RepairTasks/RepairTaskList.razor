@@ -180,7 +180,7 @@
     @if (!isEditMode)
     {
         <EditForm Model="newTaskRequest" OnValidSubmit="SaveTask">
-            <ObjectGraphDataAnnotationsValidator />
+            <DataAnnotationsValidator />
             <div class="row g-3">
                 <div class="col-12">
                     <label class="form-label">Task Name <span class="text-danger">*</span></label>
@@ -276,7 +276,7 @@
     else
     {
         <EditForm Model="updateTaskRequest" OnValidSubmit="SaveTask">
-            <ObjectGraphDataAnnotationsValidator />
+            <DataAnnotationsValidator />
             <div class="row g-3">
                 <div class="col-12">
                     <label class="form-label">Task Name <span class="text-danger">*</span></label>

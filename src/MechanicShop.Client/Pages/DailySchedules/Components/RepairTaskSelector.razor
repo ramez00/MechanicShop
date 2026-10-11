@@ -1,0 +1,73 @@
+@using MechanicShop.Client.Models
+@using MechanicShop.Client.Services
+
+<select @key="ExcludedTaskIds.Count" class="form-select" @onchange="OnTaskSelected" disabled="@(ReadOnly || !AvailableTasks.Any())">
+    <option value="">-- Add Repair Task --</option>
+    @foreach (var task in AvailableTasks)
+    {
+        <option value="@task.RepairTaskId">@task.Name | @((int)task.EstimatedDurationInMins) mins | $@task.TotalCost</option>
+    }
+</select>
+
+@if (SelectedTasks.Any())
+{
+    <div class="d-flex flex-wrap gap-2 mt-2">
+        @foreach (var task in SelectedTasks)
+        {
+            <span class="badge bg-success bg-opacity-25 border border-success text-body d-flex align-items-center gap-2 p-2">
+                <span>@task.Name</span>
+                <span class="text-secondary"><i class="bi bi-clock-history me-1"></i>@((int)task.EstimatedDurationInMins) mins</span>
+                @if (!ReadOnly)
+                {
+                    <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem;" title="Remove"
+                            @onclick="() => OnTaskRemoved.InvokeAsync(task.RepairTaskId)"></button>
+                }
+            </span>
+        }
+    </div>
+}
+
+@code {
+    [Inject] private ServiceApi _serviceApi { get; set; } = default!;
+
+    [Parameter] public bool ReadOnly { get; set; }
+
+    [Parameter] public List<Guid> ExcludedTaskIds { get; set; } = [];
+
+    [Parameter] public EventCallback<RepairTaskModel> OnTaskAdded { get; set; }
+
+    [Parameter] public EventCallback<Guid> OnTaskRemoved { get; set; }
+
+    private List<RepairTaskModel> _repairTasks = [];
+
+    private IEnumerable<RepairTaskModel> AvailableTasks =>
+        _repairTasks.Where(t => !ExcludedTaskIds.Contains(t.RepairTaskId));
+
+    private IEnumerable<RepairTaskModel> SelectedTasks =>
+        _repairTasks.Where(t => ExcludedTaskIds.Contains(t.RepairTaskId));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var repairTaskResult = await _serviceApi.GetRepairTasksAsync();
+
+        if (repairTaskResult.IsSuccess)
+        {
+            _repairTasks = repairTaskResult.Data ?? [];
+        }
+    }
+
+    private async Task OnTaskSelected(ChangeEventArgs e)
+    {
+        if (!Guid.TryParse(e.Value?.ToString(), out var taskId))
+        {
+            return;
+        }
+
+        var task = _repairTasks.FirstOrDefault(t => t.RepairTaskId == taskId);
+
+        if (task is not null)
+        {
+            await OnTaskAdded.InvokeAsync(task);
+        }
+    }
+}

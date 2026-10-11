@@ -1,4 +1,5 @@
 using MechanicShop.Application.Features.Customers.Commands.Remove;
+using MechanicShop.Contracts.Requests.Customers;
 
 namespace MechanicShop.Api.Controllers;
 
@@ -32,27 +33,27 @@ public sealed class CustomerController(ISender sender) : ApiController
     [HttpPost]
     [Authorize(Policy = "ManagerOnly")]
 
-    public async Task<IActionResult> Create([FromBody] CreateCustomerCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromBody] CreateCustomerRequest request, CancellationToken cancellationToken)
     {
-        var cars = command.cars.ConvertAll(
+        var cars = request.Vehicles.ConvertAll(
             c => new CreateCarCommand(c.Make, c.Model, c.Year, c.LicensePlate));
 
-        var result = await sender.Send(new CreateCustomerCommand(command.Name,command.PhoneNumber,command.Email,cars), cancellationToken);
+        var result = await sender.Send(new CreateCustomerCommand(request.Name, request.PhoneNumber, request.Email, cars), cancellationToken);
 
         return result.Match(
-            response => CreatedAtRoute("GetCustomerById", new { customerId = response.Id }, null),
+            response => CreatedAtRoute("GetCustomerById", new { customerId = response.Id }, response),
             errors => Problem(errors)
         );
     }
 
     [HttpPut("{customerId:guid}")]
     [Authorize(Roles = nameof(Role.Manager))]
-    public async Task<IActionResult> Update(Guid customerId, [FromBody] UpdateCustomerCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(Guid customerId, [FromBody] UpdateCustomerRequest request, CancellationToken cancellationToken)
     {
-        var cars = command.Cars.ConvertAll(
-            c => new UpdateCarCommand(c.CarId, c.Make, c.Model, c.Year, c.LicensePlate));
+        var cars = request.Vehicles.ConvertAll(
+            c => new UpdateCarCommand(c.VehicleId, c.Make, c.Model, c.Year, c.LicensePlate));
 
-        var result = await sender.Send(new UpdateCustomerCommand(customerId, command.Name, command.PhoneNumber, command.Email,cars), cancellationToken);
+        var result = await sender.Send(new UpdateCustomerCommand(customerId, request.Name, request.PhoneNumber, request.Email, cars), cancellationToken);
 
         return result.Match(
             response => Ok(response),

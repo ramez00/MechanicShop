@@ -27,6 +27,9 @@ builder.Services.AddHttpClient(
     client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
     .AddHttpMessageHandler<BearerTokenHandler>();
 
+builder.Services.AddScoped(
+    sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("MechanicShopClient"));
+
 builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddScoped<ServiceApi>();

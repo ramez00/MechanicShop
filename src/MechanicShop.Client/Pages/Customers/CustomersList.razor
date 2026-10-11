@@ -161,7 +161,7 @@
     @if(!isEditMode)
     {
         <EditForm Model="newCustomerRequest" OnValidSubmit="SaveCustomer">
-            <ObjectGraphDataAnnotationsValidator />
+            <DataAnnotationsValidator />
             <div class="row g-3">
                 <div class="col-12">
                     <label class="form-label">Customer Name <span class="text-danger">*</span></label>
@@ -263,7 +263,7 @@
     else
     {
         <EditForm Model="updateCustomerRequest" OnValidSubmit="SaveCustomer">
-            <ObjectGraphDataAnnotationsValidator />
+            <DataAnnotationsValidator />
             <div class="row g-3">
                 <div class="col-12">
                     <label class="form-label">Customer Name <span class="text-danger">*</span></label>

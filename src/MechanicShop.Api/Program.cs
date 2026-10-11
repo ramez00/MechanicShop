@@ -38,17 +38,18 @@ if (app.Environment.IsDevelopment())
     app.UseWebAssemblyDebugging();
 }
 
-app.UseExceptionHandler();
+app.UseCoreMiddlewares(builder.Configuration);
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.MapControllers();
+
+app.UseAntiforgery();
+
+app.MapStaticAssets();
 
 app.MapRazorComponents<App>().AllowAnonymous()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(MechanicShop.Client._Imports).Assembly);
 
 app.MapHub<WorkOrderHub>("/hubs/workorders");
-
-app.MapControllers();
 
 app.Run();

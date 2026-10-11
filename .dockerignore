@@ -1,0 +1,16 @@
+**/.git
+**/.vs
+**/.vscode
+**/.idea
+**/.claude
+**/bin
+**/obj
+**/*.user
+**/Dockerfile*
+**/docker-compose*
+**/.dockerignore
+**/.env
+**/secrets.dev.yaml
+tests
+requests
+*.md

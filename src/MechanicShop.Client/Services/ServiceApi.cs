@@ -280,7 +280,7 @@ public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneSe
     {
         try
         {
-            var response = await _httpClient.GetAsync("api/v1/customers");
+            var response = await _httpClient.GetAsync("api/v1/customers/GetCustomers");
 
             if (response.IsSuccessStatusCode)
             {
@@ -582,7 +582,7 @@ public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneSe
     {
         try
         {
-            var response = await _httpClient.GetAsync("api/settings/operating-hours");
+            var response = await _httpClient.GetAsync("api/settings/GetOperatingHours");
 
             if (response.IsSuccessStatusCode)
             {
