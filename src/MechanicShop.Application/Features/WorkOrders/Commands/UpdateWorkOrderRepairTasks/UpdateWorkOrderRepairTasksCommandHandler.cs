@@ -22,6 +22,7 @@ public class UpdateWorkOrderRepairTasksCommandHandler(
     public async Task<Result<Updated>> Handle(UpdateWorkOrderRepairTasksCommand request, CancellationToken cancellationToken)
     {
         var workOrder = await  _context.WorkOrders
+                                       .Include(w => w.RepairTasks)
                                        .FirstOrDefaultAsync(w => w.Id == request.WorkOrderId,cancellationToken);
 
         if(workOrder is null)
@@ -33,7 +34,16 @@ public class UpdateWorkOrderRepairTasksCommandHandler(
         var RepairTasks = await _context.RepairTasks
                                         .Where(r => request.RepairTasksId.Contains(r.Id))
                                         .ToListAsync(cancellationToken);
-       
+
+        if(RepairTasks.Count != request.RepairTasksId.Distinct().Count())
+            return ApplicationErrors.RepairTaskNotFound;
+
+        // The request carries the full selection, so replace the existing tasks rather than append to them.
+        var clearTasks = workOrder.ClearRepairTasks(workOrder.Tax);
+
+        if(clearTasks.IsError)
+            return clearTasks.Errors!;
+
         foreach(var task in RepairTasks)
         {
             var addedTask = workOrder.AddRepairTask(task);
@@ -66,8 +76,6 @@ public class UpdateWorkOrderRepairTasksCommandHandler(
         workOrder.AddDomainEvent(new WorkOrderCollectionModified());
 
         await _context.SaveChangesAsync(cancellationToken);
-
-        workOrder.AddDomainEvent(new WorkOrderCollectionModified());
 
         await _cache.RemoveByTagAsync("work-order",cancellationToken);
 

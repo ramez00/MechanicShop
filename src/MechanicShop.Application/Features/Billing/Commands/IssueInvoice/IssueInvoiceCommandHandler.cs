@@ -48,6 +48,13 @@ public class IssueInvoiceCommandHandler(
             return ApplicationErrors.WorkOrderMustBeCompletedForInvoicing;
         }
 
+        if (await _context.Invoices.AnyAsync(i => i.WorkOrderId == workOrder.Id, cancellationToken))
+        {
+            _logger.LogWarning("Invoice issuance rejected. WorkOrder {WorkOrderId} is already invoiced.", request.WorkOrderId);
+
+            return ApplicationErrors.WorkOrderAlreadyInvoiced;
+        }
+
         Guid invoiceId = Guid.NewGuid();
 
         var lineItems = new List<InvoiceLineItem>();
@@ -111,6 +118,9 @@ public class IssueInvoiceCommandHandler(
         await _context.SaveChangesAsync(cancellationToken);
 
         await _cache.RemoveByTagAsync("invoice", cancellationToken);
+
+        // Work-order queries project InvoiceId, so they must be refreshed too.
+        await _cache.RemoveByTagAsync("work-order", cancellationToken);
 
         _logger.LogInformation("Invoice {InvoiceId} issued for WorkOrder {WorkOrderId}.", invoice.Id, workOrder.Id);
 

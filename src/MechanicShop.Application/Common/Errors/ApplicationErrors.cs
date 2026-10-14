@@ -43,6 +43,11 @@ public static class ApplicationErrors
             "WorkOrder.InvoiceIssuance.InvalidState",
             "WorkOrder must be in 'Completed' state to issue an invoice.");
 
+    public static Error WorkOrderAlreadyInvoiced =>
+    Error.Conflict(
+            "WorkOrder.InvoiceIssuance.AlreadyInvoiced",
+            "An invoice has already been issued for this work order.");
+
     public static Error InvoiceNotFound => Error.NotFound(
        "ApplicationErrors.Invoice.NotFound",
        "Invoice does not exist.");

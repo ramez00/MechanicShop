@@ -52,6 +52,14 @@
     </div>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(_invoiceError))
+{
+    <div class="alert alert-danger alert-dismissible py-2">
+        @_invoiceError
+        <button type="button" class="btn-close" @onclick="() => _invoiceError = null"></button>
+    </div>
+}
+
 @if (pagedResult?.Items == null)
 {
     <p class="text-secondary">Loading...</p>
@@ -131,6 +139,24 @@ else
                                     <a class="btn btn-outline-secondary" href="/workorder-details/@wo.WorkOrderId" title="Details">
                                         <i class="bi bi-info"></i>
                                     </a>
+
+                                    @if (wo.State == WorkOrderState.Completed && _isManager)
+                                    {
+                                        @if (wo.InvoiceId is { } invoiceId)
+                                        {
+                                            <a class="btn btn-outline-success" href="/invoice/@invoiceId" title="View Invoice">
+                                                <i class="bi bi-receipt"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-outline-warning" title="Create Invoice"
+                                                    disabled="@(_issuingInvoiceFor == wo.WorkOrderId)"
+                                                    @onclick="() => CreateInvoice(wo.WorkOrderId)">
+                                                <i class="bi bi-receipt-cutoff"></i>
+                                            </button>
+                                        }
+                                    }
                                 </div>
                             </td>
                         </tr>
@@ -152,18 +178,24 @@ else
     [Inject] private ServiceApi serviceApi { get; set; } = default!;
     [Inject] private NavigationManager navigationManager { get; set; } = default!;
     [Inject] private IAccountManagement accountManagement { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider authStateProvider { get; set; } = default!;
 
     [Parameter] public int Page { get; set; }
 
     private WorkOrderFilterRequest filterRequest = new WorkOrderFilterRequest();
     private PageRequest pageRequest = new PageRequest { Page = 1, PageSize = 10 };
     private PaginatedList<WorkOrderListItemModel>? pagedResult;
+    private bool _isManager;
+    private Guid? _issuingInvoiceFor;
+    private string? _invoiceError;
 
     protected override async Task OnInitializedAsync()
     {
         if (!await accountManagement.CheckAuthenticatedAsync())
             navigationManager.NavigateTo("/login");
 
+        var user = (await authStateProvider.GetAuthenticationStateAsync()).User;
+        _isManager = user.IsInRole("Manager");
     }
 
     protected override async Task OnParametersSetAsync()
@@ -217,7 +249,12 @@ else
 
     private async Task CreateInvoice(Guid workOrderId)
     {
+        _invoiceError = null;
+        _issuingInvoiceFor = workOrderId;
+
         var createInvoiceResult = await serviceApi.IssueInvoiceAsync(workOrderId);
+
+        _issuingInvoiceFor = null;
 
         if (createInvoiceResult.IsSuccess)
         {
@@ -225,7 +262,7 @@ else
         }
         else
         {
-
+            _invoiceError = createInvoiceResult.FirstErrorMessage ?? "Failed to create invoice.";
         }
     }
 

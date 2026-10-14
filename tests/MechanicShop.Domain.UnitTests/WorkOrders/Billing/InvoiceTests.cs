@@ -20,7 +20,7 @@ public class InvoiceTests
         var result = Invoice.Create(TestConstants.Invoices.Id, TestConstants.WorkOrders.Id, OneLine(), 0m, 0m, Clock);
 
         var invoice = result.ShouldBeSuccess();
-        Assert.Equal(InvoiceStatus.unpaid, invoice.Status);
+        Assert.Equal(InvoiceStatus.Unpaid, invoice.Status);
         Assert.Equal(TestConstants.UtcNow, invoice.IssuedAtUtc);
     }
 
@@ -110,7 +110,7 @@ public class InvoiceTests
         var result = invoice.MarkAsPaid(Clock);
 
         result.ShouldBeSuccess();
-        Assert.Equal(InvoiceStatus.paid, invoice.Status);
+        Assert.Equal(InvoiceStatus.Paid, invoice.Status);
         Assert.Equal(TestConstants.UtcNow, invoice.PaidAt);
     }
 

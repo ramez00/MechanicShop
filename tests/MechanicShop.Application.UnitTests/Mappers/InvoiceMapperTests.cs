@@ -49,7 +49,7 @@ public class InvoiceMapperTests
         Assert.Equal(10m, dto.DiscountAmount);
         Assert.Equal(5m, dto.TaxAmount);
         Assert.Equal(115m, dto.Total);
-        Assert.Equal(InvoiceStatus.unpaid.ToString(), dto.PaymentStatus);
+        Assert.Equal(InvoiceStatus.Unpaid.ToString(), dto.PaymentStatus);
 
         Assert.Single(dto.items);
         Assert.Equal(lineItem.LineNumber, dto.items[0].LineNumber);

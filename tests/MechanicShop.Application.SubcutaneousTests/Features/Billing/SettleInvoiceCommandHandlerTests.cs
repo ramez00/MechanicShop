@@ -36,7 +36,7 @@ public class SettleInvoiceCommandHandlerTests : HandlerTestBase
         result.ShouldBeSuccess();
 
         var persisted = await Context.Invoices.FindAsync(invoice.Id);
-        Assert.Equal(InvoiceStatus.paid, persisted!.Status);
+        Assert.Equal(InvoiceStatus.Paid, persisted!.Status);
         Assert.Equal(Clock.GetUtcNow(), persisted.PaidAt);
     }
 

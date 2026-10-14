@@ -29,9 +29,9 @@ public class DeleteWorkOrderCommandHandler(
 
         _context.WorkOrders.Remove(workOrder);
 
-        await _context.SaveChangesAsync(cancellationToken); 
+        workOrder.AddDomainEvent(new WorkOrderCollectionModified());
 
-        workOrder.AddDomainEvent(new WorkOrderCollectionModified());                         
+        await _context.SaveChangesAsync(cancellationToken); 
 
         await _cache.RemoveByTagAsync("work-order", cancellationToken);
 

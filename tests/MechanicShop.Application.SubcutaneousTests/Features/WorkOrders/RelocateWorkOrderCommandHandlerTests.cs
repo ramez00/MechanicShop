@@ -55,7 +55,7 @@ public class RelocateWorkOrderCommandHandlerTests : HandlerTestBase
     }
 
     [Fact]
-    public async Task Handle_WhenSpotOccupied_ReturnsSpotInvalid()
+    public async Task Handle_WhenSpotOccupied_ReturnsSpotError()
     {
         var id = await SeedScheduledWorkOrderAsync();
         _policy.CheckSpotAvailabilityAsync(Arg.Any<Spot>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
@@ -64,7 +64,7 @@ public class RelocateWorkOrderCommandHandlerTests : HandlerTestBase
 
         var result = await sut.Handle(Command(id), CancellationToken.None);
 
-        result.ShouldBeError(WorkOrderErrors.SpotInvalid);
+        result.ShouldBeErrorWithCode("SpotTaken");
     }
 
     [Fact]

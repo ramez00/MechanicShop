@@ -123,9 +123,6 @@ public sealed class WorkOrder : AuditableEntity
     
     public Result<Updated> UpdateState(WorkOrderState newState)
     {
-        if(!IsEditable)
-            return WorkOrderErrors.Readonly;
-
         if (!CanTransitionTo(newState))
             return WorkOrderErrors.InvalidStateTransition(State, newState);
 

@@ -8,7 +8,7 @@ public class AssignLaborCommandHandlerTests : HandlerTestBase
 {
     private readonly IWorkOrderPolicy _policy = Substitute.For<IWorkOrderPolicy>();
 
-    private AssignLaborCommandHandler CreateSut() => new(Context, _policy);
+    private AssignLaborCommandHandler CreateSut() => new(Context, _policy, Cache);
 
     private async Task<Guid> SeedScheduledWorkOrderAsync()
     {

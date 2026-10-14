@@ -236,14 +236,26 @@ public class WorkOrderTests
     }
 
     [Fact]
-    public void UpdateState_WhenNotEditable_ReturnsReadonly()
+    public void UpdateState_FromInProgressToCompleted_UpdatesState()
     {
-        // InProgress is not editable, so the readonly guard fires before the transition check.
         var workOrder = new WorkOrderBuilder().WithState(WorkOrderState.InProgress).Build();
 
         var result = workOrder.UpdateState(WorkOrderState.Completed);
 
-        result.ShouldBeError(WorkOrderErrors.Readonly);
+        result.ShouldBeSuccess();
+        Assert.Equal(WorkOrderState.Completed, workOrder.State);
+    }
+
+    [Theory]
+    [InlineData(WorkOrderState.Completed)]
+    [InlineData(WorkOrderState.Cancelled)]
+    public void UpdateState_FromFinalState_ReturnsInvalidStateTransition(WorkOrderState finalState)
+    {
+        var workOrder = new WorkOrderBuilder().WithState(finalState).Build();
+
+        var result = workOrder.UpdateState(WorkOrderState.InProgress);
+
+        result.ShouldBeErrorWithCode("WorkOrderErrors.InvalidStateTransition");
     }
 
     [Fact]

@@ -27,20 +27,28 @@ public class RelocateWorkOrderCommandHandler(
         if(workOrder is null)
            return ApplicationErrors.WorkOrderNotFound;
 
-        var isSpotOccuiped = await _workOrderValidator.CheckSpotAvailabilityAsync(request.NewSpot,workOrder.StartAtUtc,workOrder.EndAtUtc,workOrder.Id);
-
-        if(isSpotOccuiped.IsError)
-           return WorkOrderErrors.SpotInvalid;
-
         var duration = workOrder.EndAtUtc.Subtract(workOrder.StartAtUtc).Duration();
 
         var endAt = request.NewStartAt.Add(duration);
 
+        if(_workOrderValidator.IsOutsideOperatingHours(request.NewStartAt, duration))
+            return Error.Conflict("WorkOrder_Outside_OperatingHours", "WorkOrder timing exceeds business hours.");
+
+        var spotCheckResult = await _workOrderValidator.CheckSpotAvailabilityAsync(request.NewSpot,request.NewStartAt,endAt,workOrder.Id,cancellationToken);
+
+        if(spotCheckResult.IsError)
+           return spotCheckResult.Errors!;
+
         if (await _workOrderValidator.IsLaborOccupied(workOrder.LaborId, request.WorkOrderId, request.NewStartAt, endAt))
             return ApplicationErrors.LaborOccupied;
 
-        if(await _workOrderValidator.IsVehicleAlreadyScheduled(workOrder.CarId,workOrder.StartAtUtc,endAt,request.WorkOrderId))
+        if(await _workOrderValidator.IsVehicleAlreadyScheduled(workOrder.CarId,request.NewStartAt,endAt,request.WorkOrderId))
             return ApplicationErrors.VehicleSchedulingConflict;
+
+        var updateTiming = workOrder.UpdateTiming(request.NewStartAt, endAt);
+
+        if(updateTiming.IsError)
+            return updateTiming.Errors!;
 
         var updateSpot = workOrder.UpdateSpot(request.NewSpot);
 
@@ -50,8 +58,6 @@ public class RelocateWorkOrderCommandHandler(
         workOrder.AddDomainEvent(new WorkOrderCollectionModified());
 
         await _context.SaveChangesAsync(cancellationToken);
-
-        workOrder.AddDomainEvent(new WorkOrderCollectionModified());        
 
         await _cache.RemoveByTagAsync("work-order", cancellationToken);
 

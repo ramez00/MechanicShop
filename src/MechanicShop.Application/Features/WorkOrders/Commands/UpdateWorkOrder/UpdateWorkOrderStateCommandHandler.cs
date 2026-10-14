@@ -30,10 +30,10 @@ public class UpdateWorkOrderStateCommandHandler(
         if(request.WorkOrderState == WorkOrderState.Completed)
             workOrder.AddDomainEvent(new WorkOrderCompleted{ WorkOrderId =  request.WorkOrderId });
         
+        workOrder.AddDomainEvent(new WorkOrderCollectionModified());
+
         await _context.SaveChangesAsync(cancellationToken);
 
-        workOrder.AddDomainEvent(new WorkOrderCollectionModified());
-        
         await _cache.RemoveByTagAsync("work-order",cancellationToken);
 
         return Result.updated;
