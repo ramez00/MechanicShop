@@ -14,7 +14,7 @@ else
 {
     <div class="container">
         <div class="d-flex justify-content-end mt-3">
-            <a class="btn btn-outline-secondary me-2" href="/schedules">
+            <a class="btn btn-outline-secondary me-2" href="@($"/schedules?fromWorkOrder={WorkOrder.WorkOrderId}")">
                 <i class="bi bi-calendar-event"></i> Schedule
             </a>
             <a class="btn btn-outline-primary" href="/workorders">

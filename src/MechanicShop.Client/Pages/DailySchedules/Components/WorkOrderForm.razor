@@ -129,7 +129,10 @@
     public TimeSpan MaxAllowedDuration { get; set; } = TimeSpan.FromHours(8);
 
     [Parameter]
-    public bool Disabled { get; set; } 
+    public bool Disabled { get; set; }
+
+    [Parameter]
+    public WorkOrderModel? Template { get; set; }
 
     private DateTime _localStartDate;
     private TimeSpan _localStartTime;
@@ -193,6 +196,11 @@
 
         createWorkOrderRequest.RepairTaskIds = [];
 
+        if (Template is not null)
+        {
+            await ApplyTemplateAsync(Template);
+        }
+
         isLoading = false; 
     }
 
@@ -216,6 +224,32 @@
         else
         {
             vehicles = [];
+        }
+    }
+
+    private async Task ApplyTemplateAsync(WorkOrderModel template)
+    {
+        // The work order only carries the vehicle; find its owner from the customers' cars.
+        if (template.Vehicle is not null)
+        {
+            var owner = customers?.FirstOrDefault(c =>
+                c.Vehicles.Any(v => v.VehicleId == template.Vehicle.VehicleId));
+
+            if (owner is not null)
+            {
+                selectedCustomerId = owner.CustomerId;
+                await LoadVehicles();
+                createWorkOrderRequest.CarId = template.Vehicle.VehicleId;
+            }
+        }
+
+        createWorkOrderRequest.RepairTaskIds = template.RepairTasks
+            .Select(t => t.RepairTaskId)
+            .ToList();
+
+        if (Guid.TryParse(template.Labor?.LaborId, out var laborId))
+        {
+            createWorkOrderRequest.LaborId = laborId;
         }
     }
 

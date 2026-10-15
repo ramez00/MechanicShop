@@ -530,19 +530,12 @@ public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneSe
                     return ApiResult<ScheduleModel>.Failure("Schedule data is null");
                 }
 
-                try
+                // Slots are generated in the browser's time zone (X-TimeZone header),
+                // so show them in local time to match the time sent when booking.
+                foreach (var slot in schedule.Spots.SelectMany(s => s.Slots))
                 {
-                    var timeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Montreal");
-
-                    foreach (var slot in schedule.Spots.SelectMany(s => s.Slots))
-                    {
-                        slot.StartAt = TimeZoneInfo.ConvertTime(slot.StartAt, timeZone);
-                        slot.EndAt = TimeZoneInfo.ConvertTime(slot.EndAt, timeZone);
-                    }
-                }
-                catch (TimeZoneNotFoundException)
-                {
-                    return ApiResult<ScheduleModel>.Failure("Time zone 'America/Montreal' not found on this system.");
+                    slot.StartAt = slot.StartAt.ToLocalTime();
+                    slot.EndAt = slot.EndAt.ToLocalTime();
                 }
 
                 return ApiResult<ScheduleModel>.Success(schedule);
