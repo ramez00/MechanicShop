@@ -5,7 +5,7 @@ namespace MechanicShop.Api.Controllers;
 
 [Route("api/v{version:apiVersion}/customers")]
 [ApiVersion("1.0")]
-[Authorize]
+[Authorize(Policy = "StaffOnly")]
 public sealed class CustomerController(ISender sender) : ApiController
 {
     [HttpGet("GetCustomers")]

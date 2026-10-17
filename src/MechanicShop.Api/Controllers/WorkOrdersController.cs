@@ -14,7 +14,7 @@ namespace MechanicShop.Api.Controllers;
 
 [Route("api/v{version:apiVersion}/workorders")]
 [ApiVersion("1.0")]
-[Authorize]
+[Authorize(Policy = "StaffOnly")]
 
 public sealed class WorkOrdersController(ISender sender) : ApiController
 {

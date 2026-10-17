@@ -65,6 +65,23 @@ public static class DependencyInjection
                 IssuerSigningKey = new SymmetricSecurityKey(
                        Encoding.UTF8.GetBytes(jwtSettings["Secret"]!)),
             };
+
+            // Browsers can't set headers on WebSocket/SSE requests, so SignalR sends the token in the query string.
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+
+                    if (!string.IsNullOrEmpty(accessToken) &&
+                        context.HttpContext.Request.Path.StartsWithSegments(WorkOrderHub.HubURl))
+                    {
+                        context.Token = accessToken;
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
         });
 
         services
@@ -85,6 +102,7 @@ public static class DependencyInjection
 
         services.AddAuthorizationBuilder()
               .AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"))
+              .AddPolicy("StaffOnly", policy => policy.RequireRole("Manager", "Mechanic", "Receptionist"))
               .AddPolicy("SelfScopedWorkOrderAccess", policy =>
                 policy.Requirements.Add(new LaborAssignedRequirement()));
         

@@ -1,3 +1,4 @@
+using MechanicShop.Client.Identity;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -10,12 +11,16 @@ public sealed class WorkOrderHubClient : IAsyncDisposable
     private bool _isStarted;
     private bool _isDisposed;
 
-    public WorkOrderHubClient(IWebAssemblyHostEnvironment env)
+    public WorkOrderHubClient(IWebAssemblyHostEnvironment env, IAccountManagement accountManagement)
     {
         var baseUrl = env.BaseAddress;
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{baseUrl}hubs/workorders")
+            .WithUrl($"{baseUrl}hubs/workorders", options =>
+            {
+                options.AccessTokenProvider = async () =>
+                    (await accountManagement.LoadAccessTokenFromStorage())?.AccessToken;
+            })
             .WithAutomaticReconnect()
             .Build();
     }
