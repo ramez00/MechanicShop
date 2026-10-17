@@ -1,6 +1,9 @@
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.infrastructure.BackgroundJobs;
 using MechanicShop.infrastructure.Data;
+using MechanicShop.infrastructure.Email;
+using MechanicShop.infrastructure.Settings;
+using MechanicShop.Tests.Common.Fakes;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -20,6 +23,8 @@ public class WebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
     .Build();
+
+    public FakeEmailTransport EmailTransport { get; } = new();
 
     public AppHttpClient CreateAppHttpClient()
         => new AppHttpClient(CreateClient());
@@ -57,6 +62,13 @@ public class WebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
         {
             services.RemoveAll<IHostedService>();
             services.RemoveAll<OverdueBookingCleanupService>();
+
+            // Capture emails in memory; keep the dispatcher so the real queue → transport path is exercised.
+            services.RemoveAll<IEmailTransport>();
+            services.AddSingleton(EmailTransport);
+            services.AddSingleton<IEmailTransport>(EmailTransport);
+            services.Configure<SmtpSettings>(s => s.RetryBaseDelayMilliseconds = 0);
+            services.AddHostedService<EmailDispatcherService>();
 
             services.RemoveAll<DbContextOptions<AppDbContext>>();
 

@@ -12,9 +12,13 @@ services:
       ConnectionStrings__DefaultConnection: Server=sqlserver,1433;Database=MechanicShopDb;User=sa;Password=YourStrong@Password1;TrustServerCertificate=True;MultipleActiveResultSets=True
       OTEL_EXPORTER_OTLP_ENDPOINT: http://seq:5341/ingest/otlp/v1/traces
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      Smtp__Host: smtp4dev
+      Smtp__Port: 25
+      Smtp__Security: None
     depends_on:
       - sqlserver
       - seq
+      - smtp4dev
     restart: on-failure
 
   sqlserver:
@@ -38,6 +42,14 @@ services:
     ports:
       - "5341:5341"
       - "8081:80"
+    restart: unless-stopped
+
+  # Dev-only fake mail server: catches every email the API sends. Web UI on http://localhost:5080
+  smtp4dev:
+    image: rnwood/smtp4dev:latest
+    ports:
+      - "5080:80"
+      - "2525:25"
     restart: unless-stopped
 
   prometheus:

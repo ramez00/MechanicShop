@@ -16,6 +16,10 @@ using MechanicShop.infrastructure.RealTime;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using MechanicShop.infrastructure.Email;
+using MechanicShop.infrastructure.Settings;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -125,7 +129,35 @@ public static class DependencyInjection
         services.AddScoped<IWorkOrderNotifier, SignalRWorkOrderNotifier>();
 
         services.AddHostedService<OverdueBookingCleanupService>();
-        
+
+        services.AddEmail(configuration);
+
+        return services;
+    }
+
+    public static IServiceCollection AddEmail(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<SmtpSettings>()
+            .Bind(configuration.GetSection(SmtpSettings.SectionName))
+            .Validate<IHostEnvironment>(
+                (settings, env) => !env.IsProduction()
+                    || (!string.IsNullOrWhiteSpace(settings.Host) && !string.IsNullOrWhiteSpace(settings.FromAddress)),
+                "Smtp:Host and Smtp:FromAddress must be configured in Production.")
+            .Validate(
+                settings => string.IsNullOrWhiteSpace(settings.Host) || !string.IsNullOrWhiteSpace(settings.FromAddress),
+                "Smtp:FromAddress is required when Smtp:Host is set.")
+            .ValidateOnStart();
+
+        services.AddSingleton<EmailQueue>();
+        services.AddSingleton<IEmailSender, QueuedEmailSender>();
+
+        services.AddSingleton<IEmailTransport>(sp =>
+            string.IsNullOrWhiteSpace(sp.GetRequiredService<IOptions<SmtpSettings>>().Value.Host)
+                ? ActivatorUtilities.CreateInstance<LoggingEmailTransport>(sp)
+                : ActivatorUtilities.CreateInstance<SmtpEmailTransport>(sp));
+
+        services.AddHostedService<EmailDispatcherService>();
+
         return services;
     }
 }
