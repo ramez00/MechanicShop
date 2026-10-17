@@ -21,6 +21,14 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.Email)
                .HasMaxLength(150);
 
+        // No FK to AspNetUsers: identity tables stay outside the domain model.
+        builder.Property(c => c.UserId)
+               .HasMaxLength(450);
+
+        builder.HasIndex(c => c.UserId)
+               .IsUnique()
+               .HasFilter("[UserId] IS NOT NULL");
+
         builder.Navigation(c => c.Cars)
        .UsePropertyAccessMode(PropertyAccessMode.Field);    }
 }

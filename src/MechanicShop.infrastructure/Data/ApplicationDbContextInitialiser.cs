@@ -61,6 +61,11 @@ public class ApplicationDbContextInitialiser (
         if (_roleManager.Roles.All(r => r.Name != laborRole.Name))
             await _roleManager.CreateAsync(laborRole);
 
+        var customerRole = new IdentityRole(RoleNames.Customer);
+
+        if (_roleManager.Roles.All(r => r.Name != customerRole.Name))
+            await _roleManager.CreateAsync(customerRole);
+
         var manager = new AppUser
         {
             Id = "19a59129-6c20-417a-834d-11a208d32d96",

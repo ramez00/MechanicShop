@@ -121,4 +121,48 @@ public class CustomerTests
         var car = Assert.Single(customer.Cars);
         Assert.Equal(keepId, car.Id);
     }
+
+    // ---------- CreateSelfRegistered ----------
+
+    private const string UserId = "3f2c6a1e-7b9d-4e2a-9c1f-5d8e7a6b4c3d";
+
+    [Fact]
+    public void CreateSelfRegistered_WithValidInputs_LinksUserAndHasNoCars()
+    {
+        var result = Customer.CreateSelfRegistered(
+            TestConstants.Customers.Id, UserId, TestConstants.Customers.Name, TestConstants.Customers.Email, TestConstants.Customers.Phone);
+
+        var customer = result.ShouldBeSuccess();
+        Assert.Equal(UserId, customer.UserId);
+        Assert.Equal(TestConstants.Customers.Name, customer.Name);
+        Assert.Empty(customer.Cars);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void CreateSelfRegistered_WithBlankUserId_ReturnsUserIdRequired(string userId)
+    {
+        var result = Customer.CreateSelfRegistered(
+            TestConstants.Customers.Id, userId, TestConstants.Customers.Name, TestConstants.Customers.Email, TestConstants.Customers.Phone);
+
+        result.ShouldBeError(CustomerErrors.UserIdRequired);
+    }
+
+    [Fact]
+    public void CreateSelfRegistered_WithInvalidEmail_ReturnsEmailInvalid()
+    {
+        var result = Customer.CreateSelfRegistered(
+            TestConstants.Customers.Id, UserId, TestConstants.Customers.Name, "not-an-email", TestConstants.Customers.Phone);
+
+        result.ShouldBeError(CustomerErrors.EmailInvalid);
+    }
+
+    [Fact]
+    public void Create_ByStaff_HasNoUserId()
+    {
+        var result = Customer.Create(TestConstants.Customers.Id, "John Doe", "john@example.com", "+12025550123", OneCar());
+
+        Assert.Null(result.ShouldBeSuccess().UserId);
+    }
 }

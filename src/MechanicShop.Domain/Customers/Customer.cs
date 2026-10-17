@@ -11,6 +11,9 @@ public class Customer : AuditableEntity
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
 
+    // Identity user that owns this customer record; null for customers created by staff.
+    public string? UserId { get; private set; }
+
     private readonly List<Car> _cars = [];
     public IEnumerable<Car> Cars => _cars.AsReadOnly();
 
@@ -42,6 +45,22 @@ public class Customer : AuditableEntity
         }
 
         return new Customer(id, name, email, phoneNumber, cars);
+    }
+
+    public static Result<Customer> CreateSelfRegistered(Guid id, string userId, string name, string email, string phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            return CustomerErrors.UserIdRequired;
+
+        var createResult = Create(id, name, email, phoneNumber, []);
+
+        if (createResult.IsError)
+            return createResult.Errors!;
+
+        var customer = createResult.Value;
+        customer.UserId = userId;
+
+        return customer;
     }
 
     public Result<Updated> Update(string name, string email, string phoneNumber)
