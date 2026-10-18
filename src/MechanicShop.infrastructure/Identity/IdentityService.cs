@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.WebUtilities;
 using MechanicShop.Application.Common.Errors;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Application.Features.Identity.Dtos;
@@ -88,5 +90,52 @@ public class IdentityService(
         var user = await _userManager.FindByIdAsync(userId);
 
         return user is not null && await _userManager.IsInRoleAsync(user,role);
+    }
+
+    public async Task<Result<string>> CreateUserAsync(string userName, string email, string password, string role)
+    {
+        var user = new AppUser
+        {
+            UserName = userName,
+            Email = email,
+            EmailConfirmed = false
+        };
+
+        var createResult = await _userManager.CreateAsync(user, password);
+
+        if (!createResult.Succeeded)
+            return ToErrors(createResult.Errors);
+
+        var roleResult = await _userManager.AddToRoleAsync(user, role);
+
+        if (!roleResult.Succeeded)
+            return ToErrors(roleResult.Errors);
+
+        return user.Id;
+    }
+
+    public async Task<string> GenerateEmailConfirmationTokenAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId)
+            ?? throw new InvalidOperationException($"User '{userId}' not found while generating a confirmation token.");
+
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+        // Raw tokens contain '+', '/' and '=', which break inside URLs.
+        return WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+    }
+
+    private static List<Error> ToErrors(IEnumerable<IdentityError> identityErrors)
+    {
+        var errors = identityErrors.ToList();
+
+        // Duplicates are conflicts (409); report username before email so the client gets one clear message.
+        if (errors.Any(e => e.Code == nameof(IdentityErrorDescriber.DuplicateUserName)))
+            return [ApplicationErrors.UserNameTaken];
+
+        if (errors.Any(e => e.Code == nameof(IdentityErrorDescriber.DuplicateEmail)))
+            return [ApplicationErrors.EmailTaken];
+
+        return errors.ConvertAll(e => Error.Validation(e.Code, e.Description));
     }
 }

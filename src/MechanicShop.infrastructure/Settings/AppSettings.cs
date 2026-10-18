@@ -14,4 +14,7 @@ public class AppSettings
     public int OverdueBookingCleanupFrequencyMinutes { get; set; }
     public string CorsPolicyName { get; set; } = default!;
     public string[] AllowedOrigins { get; set; } = default!;
+
+    // Public base URL of the Blazor client; used to build links in emails.
+    public string ClientBaseUrl { get; set; } = default!;
 }

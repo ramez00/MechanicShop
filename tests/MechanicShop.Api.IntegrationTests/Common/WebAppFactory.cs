@@ -58,6 +58,9 @@ public class WebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // All test requests share one client IP, so the real per-IP registration limit would throttle the suite.
+        builder.UseSetting("RateLimiting:Registration:PermitLimit", "1000");
+
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IHostedService>();

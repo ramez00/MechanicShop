@@ -28,7 +28,13 @@ public class ApiController : ControllerBase
             _ => StatusCodes.Status500InternalServerError,
         };
 
-        return Problem(statusCode: statusCode, title: error.Description);
+        var result = Problem(statusCode: statusCode, title: error.Description);
+
+        // Clients need a stable machine-readable code (e.g. "User_UserNameTaken"), not just the message.
+        if (result.Value is ProblemDetails problemDetails)
+            problemDetails.Extensions["code"] = error.Code;
+
+        return result;
     }
 
     private ActionResult ValidationProblem(List<Error> errors)

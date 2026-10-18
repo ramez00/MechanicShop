@@ -25,6 +25,6 @@ public class LoggingBehaviour<TRequest>(ILogger<TRequest> logger, IUser user, II
         }
 
         _logger.LogInformation(
-            "Request: {Name} {@UserId} {@UserName} {@Request}", requestName, userId, userName, request);
+            "Request: {Name} {@UserId} {@UserName} {@Request}", requestName, userId, userName, RequestLogging.Payload(request));
     }
 }

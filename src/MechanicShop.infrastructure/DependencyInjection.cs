@@ -98,9 +98,11 @@ public static class DependencyInjection
             options.Password.RequireLowercase = false;
             options.Password.RequiredUniqueChars = 1;
             options.SignIn.RequireConfirmedAccount = false;
+            options.User.RequireUniqueEmail = true;
         })
         .AddRoles<IdentityRole>()
-        .AddEntityFrameworkStores<AppDbContext>();
+        .AddEntityFrameworkStores<AppDbContext>()
+        .AddDefaultTokenProviders();
 
         services.AddScoped<IAuthorizationHandler, LaborAssignedHandler>();
 
@@ -124,6 +126,8 @@ public static class DependencyInjection
         services.AddScoped<IInvoicePdfGenerator, InvoicePdfGenerator>();
 
         services.AddScoped<INotificationService, NotificationService>();
+
+        services.AddSingleton<IAppLinkBuilder, AppLinkBuilder>();
 
         services.AddSignalR();
         services.AddScoped<IWorkOrderNotifier, SignalRWorkOrderNotifier>();

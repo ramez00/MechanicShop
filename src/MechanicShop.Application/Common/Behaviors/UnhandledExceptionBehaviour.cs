@@ -20,7 +20,7 @@ public class UnhandledExceptionBehaviour<TRequest, TResponse>(ILogger<TRequest> 
         {
             var requestName = typeof(TRequest).Name;
 
-            _logger.LogError(ex, "Request: Unhandled Exception for Request {Name} {@Request}", requestName, request);
+            _logger.LogError(ex, "Request: Unhandled Exception for Request {Name} {@Request}", requestName, RequestLogging.Payload(request));
 
             throw;
         }

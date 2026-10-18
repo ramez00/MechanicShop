@@ -86,6 +86,21 @@ public static class DependencyInjection
                 limiterOptions.AutoReplenishment = true;
             });
 
+            // Anonymous sign-up is the easiest endpoint to abuse, so it gets its own per-IP limit.
+            options.AddPolicy(MechanicShop.Api.RateLimitPolicies.Registration, httpContext =>
+            {
+                var section = httpContext.RequestServices.GetRequiredService<IConfiguration>().GetSection("RateLimiting:Registration");
+
+                return RateLimitPartition.GetFixedWindowLimiter(
+                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = section.GetValue("PermitLimit", 5),
+                        Window = TimeSpan.FromMinutes(section.GetValue("WindowMinutes", 1)),
+                        QueueLimit = 0
+                    });
+            });
+
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
         });
 

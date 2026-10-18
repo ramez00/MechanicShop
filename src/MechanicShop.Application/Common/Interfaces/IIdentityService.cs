@@ -14,4 +14,10 @@ public interface IIdentityService
     Task<Result<AppUserDto>> GetUserByIdAsync(string userId);
 
     Task<string?> GetUserNameAsync(string userId);
+
+    // Creates an unconfirmed user in the given role and returns the new user's id.
+    Task<Result<string>> CreateUserAsync(string userName, string email, string password, string role);
+
+    // Returns a URL-safe (Base64Url) email confirmation token.
+    Task<string> GenerateEmailConfirmationTokenAsync(string userId);
 }

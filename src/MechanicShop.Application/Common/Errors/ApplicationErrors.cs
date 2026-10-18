@@ -73,6 +73,14 @@ public static class ApplicationErrors
         code: "Auth.User.NotFound",
         description: "User not found.");
 
+    public static Error UserNameTaken => Error.Conflict(
+        code: "User_UserNameTaken",
+        description: "This username is already taken.");
+
+    public static Error EmailTaken => Error.Conflict(
+        code: "User_EmailTaken",
+        description: "An account with this email already exists.");
+
     public static readonly Error TokenGenerationFailed = Error.Failure(
         code: "Auth.TokenGeneration.Failed",
         description: "Failed to generate new JWT token.");
