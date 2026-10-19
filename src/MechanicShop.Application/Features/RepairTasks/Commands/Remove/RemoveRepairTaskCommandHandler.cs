@@ -30,6 +30,8 @@ public class RemoveRepairTaskCommandHandler(IAppDbContext context,HybridCache ca
         _context.RepairTasks.Remove(repairTask);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return Result.deleted;                                    
+        await _cache.RemoveByTagAsync(RepairTaskCacheTags.RepairTask, cancellationToken);
+
+        return Result.deleted;                                  
     }
 }

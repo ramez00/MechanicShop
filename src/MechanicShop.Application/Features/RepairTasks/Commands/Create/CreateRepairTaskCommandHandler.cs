@@ -51,6 +51,8 @@ public class CreateRepairTaskCommandHandler(
         _context.RepairTasks.Add(createdRepairTask.Value);
         await _context.SaveChangesAsync(ct);
 
+        await _cache.RemoveByTagAsync(RepairTaskCacheTags.RepairTask, ct);
+
         return createdRepairTask.Value.ToDto();
 
     }

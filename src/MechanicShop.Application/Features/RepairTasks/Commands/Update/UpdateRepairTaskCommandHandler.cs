@@ -50,7 +50,7 @@ public class UpdateRepairTaskCommandHandler(
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _cache.RemoveAsync("repair-task",cancellationToken);
+        await _cache.RemoveByTagAsync(RepairTaskCacheTags.RepairTask, cancellationToken);
 
         return Result.updated;        
     }
