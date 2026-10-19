@@ -9,6 +9,7 @@ using MechanicShop.Domain.RepairTasks.Parts;
 using MechanicShop.Domain.workOrders.Billing;
 using MechanicShop.Domain.WorkOrders;
 using MechanicShop.infrastructure.Identity;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MediatR;
@@ -18,7 +19,7 @@ namespace MechanicShop.infrastructure.Data;
 public class AppDbContext(
     DbContextOptions<AppDbContext> options,
     IPublisher  publisher
-) : IdentityDbContext<AppUser>(options) , IAppDbContext
+) : IdentityDbContext<AppUser>(options) , IAppDbContext, IDataProtectionKeyContext
 {
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Part> Parts => Set<Part>();
@@ -28,6 +29,10 @@ public class AppDbContext(
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    // Data Protection keys sign Identity tokens (e.g. email confirmation links); storing them here
+    // keeps outstanding links valid across restarts and container redeploys.
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

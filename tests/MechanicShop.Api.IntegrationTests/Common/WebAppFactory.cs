@@ -60,6 +60,7 @@ public class WebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         // All test requests share one client IP, so the real per-IP registration limit would throttle the suite.
         builder.UseSetting("RateLimiting:Registration:PermitLimit", "1000");
+        builder.UseSetting("RateLimiting:ResendConfirmation:PermitLimit", "1000");
 
         builder.ConfigureTestServices(services =>
         {

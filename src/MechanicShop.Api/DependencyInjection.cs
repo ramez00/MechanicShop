@@ -86,25 +86,33 @@ public static class DependencyInjection
                 limiterOptions.AutoReplenishment = true;
             });
 
-            // Anonymous sign-up is the easiest endpoint to abuse, so it gets its own per-IP limit.
-            options.AddPolicy(MechanicShop.Api.RateLimitPolicies.Registration, httpContext =>
-            {
-                var section = httpContext.RequestServices.GetRequiredService<IConfiguration>().GetSection("RateLimiting:Registration");
-
-                return RateLimitPartition.GetFixedWindowLimiter(
-                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = section.GetValue("PermitLimit", 5),
-                        Window = TimeSpan.FromMinutes(section.GetValue("WindowMinutes", 1)),
-                        QueueLimit = 0
-                    });
-            });
+            // Anonymous endpoints that create accounts or send emails are the easiest to abuse,
+            // so each gets its own per-IP limit.
+            options.AddPerIpFixedWindowPolicy(MechanicShop.Api.RateLimitPolicies.Registration, defaultPermitLimit: 5);
+            options.AddPerIpFixedWindowPolicy(MechanicShop.Api.RateLimitPolicies.ResendConfirmation, defaultPermitLimit: 3);
 
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
         });
 
         return services;
+    }
+
+    // Limits are read from "RateLimiting:<policyName>" (PermitLimit, WindowMinutes).
+    private static void AddPerIpFixedWindowPolicy(this RateLimiterOptions options, string policyName, int defaultPermitLimit)
+    {
+        options.AddPolicy(policyName, httpContext =>
+        {
+            var section = httpContext.RequestServices.GetRequiredService<IConfiguration>().GetSection($"RateLimiting:{policyName}");
+
+            return RateLimitPartition.GetFixedWindowLimiter(
+                httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = section.GetValue("PermitLimit", defaultPermitLimit),
+                    Window = TimeSpan.FromMinutes(section.GetValue("WindowMinutes", 1)),
+                    QueueLimit = 0
+                });
+        });
     }
 
     public static IServiceCollection AddCustomProblemDetails(this IServiceCollection services)

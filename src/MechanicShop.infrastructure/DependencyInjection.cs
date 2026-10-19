@@ -20,6 +20,7 @@ using MechanicShop.infrastructure.Email;
 using MechanicShop.infrastructure.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -99,10 +100,17 @@ public static class DependencyInjection
             options.Password.RequiredUniqueChars = 1;
             options.SignIn.RequireConfirmedAccount = false;
             options.User.RequireUniqueEmail = true;
+            options.Tokens.EmailConfirmationTokenProvider = EmailConfirmationTokenProviderOptions.ProviderName;
         })
         .AddRoles<IdentityRole>()
         .AddEntityFrameworkStores<AppDbContext>()
-        .AddDefaultTokenProviders();
+        .AddDefaultTokenProviders()
+        .AddTokenProvider<EmailConfirmationTokenProvider<AppUser>>(EmailConfirmationTokenProviderOptions.ProviderName);
+
+        // Without persisted keys every restart or redeploy would invalidate outstanding email links.
+        services.AddDataProtection()
+            .SetApplicationName("MechanicShop")
+            .PersistKeysToDbContext<AppDbContext>();
 
         services.AddScoped<IAuthorizationHandler, LaborAssignedHandler>();
 

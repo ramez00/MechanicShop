@@ -20,4 +20,11 @@ public interface IIdentityService
 
     // Returns a URL-safe (Base64Url) email confirmation token.
     Task<string> GenerateEmailConfirmationTokenAsync(string userId);
+
+    // Accepts the Base64Url token from GenerateEmailConfirmationTokenAsync. Succeeds again for an
+    // already-confirmed user as long as the token is still valid.
+    Task<Result<Success>> ConfirmEmailAsync(string userId, string token);
+
+    // Returns the id of the user with this email only if they still need to confirm it; otherwise null.
+    Task<string?> FindUnconfirmedUserIdByEmailAsync(string email);
 }

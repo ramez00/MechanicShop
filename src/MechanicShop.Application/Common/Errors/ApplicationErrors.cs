@@ -81,6 +81,15 @@ public static class ApplicationErrors
         code: "User_EmailTaken",
         description: "An account with this email already exists.");
 
+    public static Error EmailNotConfirmed => Error.Forbidden(
+        code: "User_EmailNotConfirmed",
+        description: "Please confirm your email address before signing in.");
+
+    // Deliberately generic: unknown user, tampered token and expired token all look the same to the caller.
+    public static Error InvalidEmailConfirmationLink => Error.Validation(
+        code: "User_InvalidConfirmationLink",
+        description: "This confirmation link is invalid or has expired.");
+
     public static readonly Error TokenGenerationFailed = Error.Failure(
         code: "Auth.TokenGeneration.Failed",
         description: "Failed to generate new JWT token.");

@@ -5,6 +5,7 @@ using MechanicShop.Application.Common.Errors;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Application.Features.Identity.Dtos;
 using MechanicShop.Domain.Common.Results;
+using MechanicShop.Domain.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
@@ -34,13 +35,15 @@ public class IdentityService(
         if(user is null)
             return ApplicationErrors.UserNotFound;
 
-        if(!user.EmailConfirmed)
-            return Error.Conflict("Email_Not_Confirmed", "email not confirmed");
-
         if(!await _userManager.CheckPasswordAsync(user,password))
             return Error.Conflict("Invalid_Login_Attempt", "Email / Password are incorrect");
 
         var userRoles = await getUserRoles(user);
+
+        // Checked after the password so the confirmation state isn't revealed to someone guessing.
+        // Only self-registered customers must confirm; staff accounts are created by the shop.
+        if(!user.EmailConfirmed && userRoles.Contains(RoleNames.Customer))
+            return ApplicationErrors.EmailNotConfirmed;
 
         var claims = await getUserClaims(user);
 
@@ -123,6 +126,55 @@ public class IdentityService(
 
         // Raw tokens contain '+', '/' and '=', which break inside URLs.
         return WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+    }
+
+    public async Task<Result<Success>> ConfirmEmailAsync(string userId, string token)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null || !TryDecodeToken(token, out var rawToken))
+            return ApplicationErrors.InvalidEmailConfirmationLink;
+
+        // Verify even when already confirmed, so a reused link still succeeds but a tampered one doesn't.
+        var isValid = await _userManager.VerifyUserTokenAsync(
+            user,
+            _userManager.Options.Tokens.EmailConfirmationTokenProvider,
+            UserManager<AppUser>.ConfirmEmailTokenPurpose,
+            rawToken);
+
+        if (!isValid)
+            return ApplicationErrors.InvalidEmailConfirmationLink;
+
+        if (user.EmailConfirmed)
+            return Result.success;
+
+        var confirmResult = await _userManager.ConfirmEmailAsync(user, rawToken);
+
+        if (!confirmResult.Succeeded)
+            return ApplicationErrors.InvalidEmailConfirmationLink;
+
+        return Result.success;
+    }
+
+    public async Task<string?> FindUnconfirmedUserIdByEmailAsync(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+
+        return user is { EmailConfirmed: false } ? user.Id : null;
+    }
+
+    private static bool TryDecodeToken(string token, out string rawToken)
+    {
+        try
+        {
+            rawToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+            return true;
+        }
+        catch (FormatException)
+        {
+            rawToken = string.Empty;
+            return false;
+        }
     }
 
     private static List<Error> ToErrors(IEnumerable<IdentityError> identityErrors)
