@@ -1,3 +1,4 @@
+using MechanicShop.Application.Features.Customers.Cars;
 using MechanicShop.Application.Common.Errors;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Domain.Common.Results;
@@ -31,6 +32,18 @@ public class UpdateCustomerCommandHandler(ILogger<UpdateCustomerCommandHandler> 
             return ApplicationErrors.CustomerNotFound;
         }
                              
+        if (request.Cars.Select(c => c.LicensePlate).HasDuplicateLicensePlates())
+            return CarErrors.PlateTaken;
+
+        // This customer's own cars are either updated or removed below, so only other customers' plates conflict.
+        var otherCustomersCars = _context.Vehicles.Where(v => v.CustomerId != customer.Id);
+
+        foreach (var c in request.Cars)
+        {
+            if (await otherCustomersCars.IsLicensePlateTakenAsync(c.LicensePlate, cancellationToken))
+                return CarErrors.PlateTaken;
+        }
+
         List<Car> customerCars = [];
 
         foreach(var c in request.Cars)

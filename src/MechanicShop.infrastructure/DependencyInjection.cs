@@ -21,6 +21,8 @@ using MechanicShop.infrastructure.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.DataProtection;
+using MechanicShop.Application.Common.Identity;
+using MechanicShop.Domain.Identity;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -120,6 +122,10 @@ public static class DependencyInjection
         services.AddAuthorizationBuilder()
               .AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"))
               .AddPolicy("StaffOnly", policy => policy.RequireRole("Manager", "Mechanic", "Receptionist"))
+              // The customer_id claim is what scopes "me" endpoints, so it is required alongside the role.
+              .AddPolicy("CustomerOnly", policy => policy
+                .RequireRole(RoleNames.Customer)
+                .RequireClaim(AppClaimTypes.CustomerId))
               .AddPolicy("SelfScopedWorkOrderAccess", policy =>
                 policy.Requirements.Add(new LaborAssignedRequirement()));
         

@@ -23,12 +23,15 @@ public class CustomersControllerTests(WebAppFactory webAppFactory)
     private readonly AppHttpClient _client = webAppFactory.CreateAppHttpClient();
     private readonly IAppDbContext _context = webAppFactory.CreateAppDbContext();
 
+    // License plates are unique across all customers.
+    private static string UniquePlate() => $"C{Random.Shared.Next(0, 1_000_000_000):D9}";
+
     private async Task<Customer> CreateCustomerAsync()
     {
         var customer = new CustomerBuilder()
             .WithId(Guid.NewGuid())
             .WithEmail($"customer.{Guid.NewGuid():N}@example.com")
-            .WithCars(new CarBuilder().WithId(Guid.NewGuid()).Build())
+            .WithCars(new CarBuilder().WithId(Guid.NewGuid()).WithLicensePlate(UniquePlate()).Build())
             .Build();
 
         _context.Customers.Add(customer);
@@ -150,7 +153,7 @@ public class CustomersControllerTests(WebAppFactory webAppFactory)
         var existingCustomer = new CustomerBuilder()
             .WithId(Guid.NewGuid())
             .WithEmail(duplicateEmail)
-            .WithCars(new CarBuilder().WithId(Guid.NewGuid()).Build())
+            .WithCars(new CarBuilder().WithId(Guid.NewGuid()).WithLicensePlate(UniquePlate()).Build())
             .Build();
 
         _context.Customers.Add(existingCustomer);
@@ -362,7 +365,7 @@ public class CustomersControllerTests(WebAppFactory webAppFactory)
         var customer = new CustomerBuilder()
             .WithId(Guid.NewGuid())
             .WithEmail($"customer.conflict.{Guid.NewGuid():N}@example.com")
-            .WithCars(new CarBuilder().WithId(Guid.NewGuid()).Build())
+            .WithCars(new CarBuilder().WithId(Guid.NewGuid()).WithLicensePlate(UniquePlate()).Build())
             .Build();
 
         _context.Customers.Add(customer);

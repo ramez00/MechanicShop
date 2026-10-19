@@ -21,8 +21,8 @@ public class GetCustomersQueryHandlerTests : HandlerTestBase
     public async Task Handle_ReturnsAllCustomersWithCars()
     {
         await SeedAsync(
-            new CustomerBuilder().WithId(Guid.NewGuid()).WithEmail("a@example.com").WithCars(new CarBuilder().WithId(Guid.NewGuid()).Build()).Build(),
-            new CustomerBuilder().WithId(Guid.NewGuid()).WithEmail("b@example.com").WithCars(new CarBuilder().WithId(Guid.NewGuid()).Build()).Build());
+            new CustomerBuilder().WithId(Guid.NewGuid()).WithEmail("a@example.com").WithCars(new CarBuilder().WithId(Guid.NewGuid()).WithLicensePlate("AAA-111").Build()).Build(),
+            new CustomerBuilder().WithId(Guid.NewGuid()).WithEmail("b@example.com").WithCars(new CarBuilder().WithId(Guid.NewGuid()).WithLicensePlate("BBB-222").Build()).Build());
         var sut = CreateSut();
 
         var result = await sut.Handle(new GetCustomersQuery(), CancellationToken.None);

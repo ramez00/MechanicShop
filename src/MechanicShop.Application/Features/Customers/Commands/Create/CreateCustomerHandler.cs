@@ -1,3 +1,4 @@
+using MechanicShop.Application.Features.Customers.Cars;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Application.customers.Mappers;
 using MechanicShop.Application.Features.Customers.Dtos;
@@ -30,6 +31,15 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
         {
             _logger.LogWarning($"Create Customer with Email already defined {request.Email}");
             return CustomerErrors.CustomerAlreadyExists;
+        }
+
+        if (request.cars.Select(c => c.LicensePlate).HasDuplicateLicensePlates())
+            return CarErrors.PlateTaken;
+
+        foreach (var car in request.cars)
+        {
+            if (await _dbContext.Vehicles.IsLicensePlateTakenAsync(car.LicensePlate, cancellationToken))
+                return CarErrors.PlateTaken;
         }
 
         List<Car> cars = [];

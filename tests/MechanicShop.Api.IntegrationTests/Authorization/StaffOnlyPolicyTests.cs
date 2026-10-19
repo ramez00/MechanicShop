@@ -28,7 +28,8 @@ public class StaffOnlyPolicyTests(WebAppFactory webAppFactory) : IAsyncLifetime
     private static readonly Type[] NonStaffControllers =
     [
         typeof(IdentityController),
-        typeof(SettingsController)
+        typeof(SettingsController),
+        typeof(MyVehiclesController)
     ];
 
     private static readonly string[] StaffPolicies = ["StaffOnly", "ManagerOnly"];

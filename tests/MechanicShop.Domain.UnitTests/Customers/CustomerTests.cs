@@ -165,4 +165,38 @@ public class CustomerTests
 
         Assert.Null(result.ShouldBeSuccess().UserId);
     }
+
+    // ---------- AddCar / RemoveCar ----------
+
+    [Fact]
+    public void AddCar_AppendsCar()
+    {
+        var customer = new CustomerBuilder().Build();
+        var car = new CarBuilder().WithId(Guid.NewGuid()).Build();
+
+        customer.AddCar(car);
+
+        Assert.Contains(car, customer.Cars);
+    }
+
+    [Fact]
+    public void RemoveCar_RemovesOnlyThatCar()
+    {
+        var keep = new CarBuilder().WithId(Guid.NewGuid()).Build();
+        var drop = new CarBuilder().WithId(Guid.NewGuid()).Build();
+        var customer = new CustomerBuilder().WithCars(keep, drop).Build();
+
+        customer.RemoveCar(drop.Id).ShouldBeSuccess();
+
+        Assert.Equal([keep.Id], customer.Cars.Select(c => c.Id));
+    }
+
+    [Fact]
+    public void RemoveCar_WithUnknownId_ReturnsCarNotFound()
+    {
+        var customer = new CustomerBuilder().Build();
+        var unknownId = Guid.NewGuid();
+
+        customer.RemoveCar(unknownId).ShouldBeError(CarErrors.CarNotFound(unknownId));
+    }
 }

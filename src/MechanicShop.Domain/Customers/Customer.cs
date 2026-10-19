@@ -88,6 +88,16 @@ public class Customer : AuditableEntity
     }
 
 
+    public void AddCar(Car car) => _cars.Add(car);
+
+    public Result<Deleted> RemoveCar(Guid carId)
+    {
+        if (_cars.RemoveAll(c => c.Id == carId) == 0)
+            return CarErrors.CarNotFound(carId);
+
+        return Result.deleted;
+    }
+
     public Result<Updated> UpsertParts(List<Car> incomingCar)
     {
         

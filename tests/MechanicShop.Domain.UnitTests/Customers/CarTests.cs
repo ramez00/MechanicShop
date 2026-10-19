@@ -48,6 +48,52 @@ public class CarTests
         result.ShouldBeError(CarErrors.YearInvalid);
     }
 
+    [Theory]
+    [InlineData(1885, false)]
+    [InlineData(1886, true)] // the first car
+    public void Car_Create_year_rules_lower_bound(int year, bool isValid)
+        => AssertYearRule(year, isValid);
+
+    // Relative to the current year, so the rule stays correct as years pass.
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(1, true)] // next year's models go on sale this year
+    [InlineData(2, false)]
+    public void Car_Create_year_rules_upper_bound(int yearsFromNow, bool isValid)
+        => AssertYearRule(DateTime.UtcNow.Year + yearsFromNow, isValid);
+
+    private static void AssertYearRule(int year, bool isValid)
+    {
+        var result = Car.Create(TestConstants.Cars.Id, "Toyota", "Corolla", year, "ABC-1234");
+
+        if (isValid)
+            result.ShouldBeSuccess();
+        else
+            result.ShouldBeError(CarErrors.YearInvalid);
+    }
+
+    [Theory]
+    [InlineData(" ab 12 cd ", "AB12CD")]
+    [InlineData("abc-1234", "ABC-1234")]
+    [InlineData("AB\t12", "AB12")]
+    public void Plate_is_normalized(string input, string expected)
+    {
+        var car = Car.Create(TestConstants.Cars.Id, "Toyota", "Corolla", 2020, input).ShouldBeSuccess();
+
+        Assert.Equal(expected, car.LicensePlate);
+    }
+
+    [Fact]
+    public void Update_normalizes_plate_and_accepts_next_year()
+    {
+        var car = new CarBuilder().Build();
+
+        var result = car.Update("Toyota", "Corolla", DateTime.UtcNow.Year + 1, " xy 99 ");
+
+        result.ShouldBeSuccess();
+        Assert.Equal("XY99", car.LicensePlate);
+    }
+
     [Fact]
     public void Create_WithBlankLicensePlate_ReturnsLicensePlateRequired()
     {

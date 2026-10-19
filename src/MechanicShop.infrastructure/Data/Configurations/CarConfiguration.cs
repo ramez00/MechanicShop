@@ -26,6 +26,11 @@ public class CarConfiguration : IEntityTypeConfiguration<Car>
 
         builder.Property(v => v.Year).IsRequired();
 
-        builder.Property(v => v.LicensePlate).IsRequired();
+        builder.Property(v => v.LicensePlate)
+               .IsRequired()
+               .HasMaxLength(20);
+
+        // Plates are stored normalized (Car.NormalizeLicensePlate), so this also catches case/spacing variants.
+        builder.HasIndex(v => v.LicensePlate).IsUnique();
     }
 }

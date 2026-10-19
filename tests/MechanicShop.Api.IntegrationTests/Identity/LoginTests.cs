@@ -8,7 +8,6 @@ using MechanicShop.Application.Common.Identity;
 using MechanicShop.Application.Features.Identity;
 using MechanicShop.Application.Features.Identity.Queries.GenerateTokens;
 using MechanicShop.Application.Features.Identity.Queries.RefreshTokens;
-using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Identity;
 using MechanicShop.infrastructure.Data;
 using MechanicShop.infrastructure.Identity;
@@ -30,31 +29,11 @@ public class LoginTests(WebAppFactory webAppFactory)
 {
     private const string LoginUrl = "/identity/token/generate";
     private const string RefreshUrl = "/identity/token/refresh-token";
-    private const string Password = "Passw0rd1";
+    private const string Password = TestCustomerAccounts.Password;
 
     private readonly HttpClient _client = webAppFactory.CreateClient();
 
-    private sealed record ConfirmedCustomer(string UserId, string UserName, string Email, Guid CustomerId);
-
-    // Creates a confirmed customer directly; registration and confirmation are covered by their own tests.
-    private async Task<ConfirmedCustomer> CreateConfirmedCustomerAsync()
-    {
-        var suffix = Guid.NewGuid().ToString("N")[..10];
-        var user = new AppUser { UserName = $"login_{suffix}", Email = $"login.{suffix}@test.local", EmailConfirmed = true };
-
-        using var scope = webAppFactory.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        Assert.True((await userManager.CreateAsync(user, Password)).Succeeded);
-        Assert.True((await userManager.AddToRoleAsync(user, RoleNames.Customer)).Succeeded);
-
-        var customer = Customer.CreateSelfRegistered(Guid.NewGuid(), user.Id, "Login Test", user.Email, "+201000000000").Value;
-        context.Customers.Add(customer);
-        await context.SaveChangesAsync();
-
-        return new ConfirmedCustomer(user.Id, user.UserName, user.Email, customer.Id);
-    }
+    private Task<TestCustomerAccount> CreateConfirmedCustomerAsync() => TestCustomerAccounts.CreateAsync(webAppFactory);
 
     private static Task<HttpResponseMessage> LoginAsync(HttpClient client, string userName, string password)
         => client.PostAsJsonAsync(LoginUrl, new GenerateTokenQuery(userName, password));

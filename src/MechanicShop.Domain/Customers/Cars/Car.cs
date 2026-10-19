@@ -5,6 +5,8 @@ namespace MechanicShop.Domain.Customers.cars;
 
 public class Car : AuditableEntity
 {
+    public const int EarliestModelYear = 1886;
+
     public Guid CustomerId { get; }
     public string Make { get; private set; }
     public string Model { get; private set; }
@@ -25,22 +27,34 @@ public class Car : AuditableEntity
 
     public static Result<Car> Create(Guid id, string make, string model, int year, string licensePlate)
     {
-        if (string.IsNullOrWhiteSpace(make))
-            return CarErrors.MakeRequired;
+        var validation = Validate(make, model, year, licensePlate);
 
-        if (string.IsNullOrWhiteSpace(model))
-            return CarErrors.ModelRequired;
+        if (validation.IsError)
+            return validation.Errors!;
 
-        if (year < 1886 || year > DateTime.UtcNow.Year)
-            return CarErrors.YearInvalid;
-
-        if (string.IsNullOrWhiteSpace(licensePlate))
-            return CarErrors.LicensePlateRequired;
-
-        return new Car(id, make, model, year, licensePlate);
+        return new Car(id, make, model, year, NormalizeLicensePlate(licensePlate));
     }
 
     public Result<Updated> Update(string make, string model, int year, string licensePlate)
+    {
+        var validation = Validate(make, model, year, licensePlate);
+
+        if (validation.IsError)
+            return validation.Errors!;
+
+        Make = make;
+        Model = model;
+        Year = year;
+        LicensePlate = NormalizeLicensePlate(licensePlate);
+
+        return Result.updated;
+    }
+
+    // Plates are stored uppercase without whitespace, so " ab 12 cd " and "AB12CD" are the same plate.
+    public static string NormalizeLicensePlate(string licensePlate)
+        => string.Concat(licensePlate.Where(c => !char.IsWhiteSpace(c))).ToUpperInvariant();
+
+    private static Result<Success> Validate(string make, string model, int year, string licensePlate)
     {
         if (string.IsNullOrWhiteSpace(make))
             return CarErrors.MakeRequired;
@@ -48,17 +62,13 @@ public class Car : AuditableEntity
         if (string.IsNullOrWhiteSpace(model))
             return CarErrors.ModelRequired;
 
-        if (year < 1886 || year > DateTime.UtcNow.Year)
+        // Next year's models go on sale this year.
+        if (year < EarliestModelYear || year > DateTime.UtcNow.Year + 1)
             return CarErrors.YearInvalid;
 
         if (string.IsNullOrWhiteSpace(licensePlate))
             return CarErrors.LicensePlateRequired;
 
-        Make = make;
-        Model = model;
-        Year = year;
-        LicensePlate = licensePlate;
-
-        return Result.updated;
+        return Result.success;
     }
 }
