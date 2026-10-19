@@ -2,7 +2,7 @@ namespace MechanicShop.Client.Identity
 {
     public interface IAccountManagement
     {
-        public Task<FormResult> LoginAsync(string email, string password);
+        public Task<FormResult> LoginAsync(string userName, string password);
 
         public Task<TokenResponse?> RefreshTokenAsync();
 

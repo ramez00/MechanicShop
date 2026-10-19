@@ -81,6 +81,15 @@ public static class ApplicationErrors
         code: "User_EmailTaken",
         description: "An account with this email already exists.");
 
+    // Unknown user, wrong password and locked-out account all return this, so none can be told apart.
+    public static Error InvalidCredentials => Error.Unauthorized(
+        code: "Auth_InvalidCredentials",
+        description: "Username or password is incorrect.");
+
+    public static Error CustomerAccountNotFound => Error.Unauthorized(
+        code: "Auth_CustomerNotFound",
+        description: "No customer profile is linked to this account.");
+
     public static Error EmailNotConfirmed => Error.Forbidden(
         code: "User_EmailNotConfirmed",
         description: "Please confirm your email address before signing in.");

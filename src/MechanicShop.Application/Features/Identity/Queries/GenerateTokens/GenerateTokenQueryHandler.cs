@@ -18,7 +18,7 @@ public class GenerateTokenQueryHandler(
 
     public async Task<Result<TokenResponse>> Handle(GenerateTokenQuery request, CancellationToken ct)
     {
-        var userResponse = await _identityService.AuthenticateAsync(request.Email, request.Password);
+        var userResponse = await _identityService.AuthenticateAsync(request.UserName, request.Password);
 
         if(userResponse.IsError)
             return userResponse.Errors!;

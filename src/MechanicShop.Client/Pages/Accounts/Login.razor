@@ -21,9 +21,9 @@
                                 <label>Username <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
-                                    <InputText class="form-control" @bind-Value="loginRequest.Email" placeholder="Enter Username" />
+                                    <InputText class="form-control" @bind-Value="loginRequest.UserName" placeholder="Enter Username" />
                                 </div>
-                                <ValidationMessage For="@(() => loginRequest.Email)" />
+                                <ValidationMessage For="@(() => loginRequest.UserName)" />
                             </div>
 
                             <div class="mb-3">
@@ -90,7 +90,7 @@
         errorList = [];
 
 
-        var result = await accountManagement.LoginAsync(loginRequest.Email, loginRequest.Password);
+        var result = await accountManagement.LoginAsync(loginRequest.UserName, loginRequest.Password);
 
         if (result.Succeeded)
         {

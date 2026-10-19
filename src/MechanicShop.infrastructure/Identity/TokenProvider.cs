@@ -2,6 +2,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using MechanicShop.Application.Common.Errors;
+using MechanicShop.Application.Common.Identity;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Application.Features.Identity;
 using MechanicShop.Application.Features.Identity.Dtos;
@@ -53,6 +55,20 @@ public class TokenProvider(
 
         foreach(var role in user.Roles)
             claims.Add(new Claim(ClaimTypes.Role, role));
+
+        // Resolved on every login and refresh, so a customer whose profile was removed can't keep a session.
+        if(user.Roles.Contains(RoleNames.Customer))
+        {
+            var customerId = await _context.Customers
+                .Where(c => c.UserId == user.UserId)
+                .Select(c => (Guid?)c.Id)
+                .FirstOrDefaultAsync(ct);
+
+            if(customerId is null)
+                return ApplicationErrors.CustomerAccountNotFound;
+
+            claims.Add(new Claim(AppClaimTypes.CustomerId, customerId.Value.ToString()));
+        }
 
         var descriptor = new SecurityTokenDescriptor
         {

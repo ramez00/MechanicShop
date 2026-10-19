@@ -20,7 +20,7 @@ public class IdentityControllerTests(WebAppFactory webAppFactory)
     [Fact]
     public async Task GenerateToken_WithValidCredentials_ShouldReturnToken()
     {
-        var request = new GenerateTokenQuery(TestUsers.Manager.Email!, TestUsers.Manager.Email!);
+        var request = new GenerateTokenQuery(TestUsers.Manager.UserName!, TestUsers.Manager.Email!);
 
         var response = await _client.PostAsJsonAsync("/identity/token/generate", request);
 
@@ -34,23 +34,23 @@ public class IdentityControllerTests(WebAppFactory webAppFactory)
     }
 
     [Fact]
-    public async Task GenerateToken_WithInvalidPassword_ShouldReturnConflict()
+    public async Task GenerateToken_WithInvalidPassword_ShouldReturnUnauthorized()
     {
-        var request = new GenerateTokenQuery(TestUsers.Labor01.Email!, "wrong-password");
+        var request = new GenerateTokenQuery(TestUsers.Labor01.UserName!, "wrong-password");
 
         var response = await _client.PostAsJsonAsync("/identity/token/generate", request);
 
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
-    public async Task GenerateToken_WithUnknownUser_ShouldReturnNotFound()
+    public async Task GenerateToken_WithUnknownUser_ShouldReturnUnauthorized()
     {
         var request = new GenerateTokenQuery("unknown.user@localhost", "whatever");
 
         var response = await _client.PostAsJsonAsync("/identity/token/generate", request);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class IdentityControllerTests(WebAppFactory webAppFactory)
     {
         var tokenResponse = await _client.PostAndGetFromJsonAsync<GenerateTokenQuery, TokenResponse>(
             "/identity/token/generate",
-            new GenerateTokenQuery(TestUsers.Manager.Email!, TestUsers.Manager.Email!));
+            new GenerateTokenQuery(TestUsers.Manager.UserName!, TestUsers.Manager.Email!));
 
         Assert.NotNull(tokenResponse);
 
@@ -90,7 +90,7 @@ public class IdentityControllerTests(WebAppFactory webAppFactory)
     {
         var tokenResponse = await _client.PostAndGetFromJsonAsync<GenerateTokenQuery, TokenResponse>(
             "/identity/token/generate",
-            new GenerateTokenQuery(TestUsers.Manager.Email!, TestUsers.Manager.Email!));
+            new GenerateTokenQuery(TestUsers.Manager.UserName!, TestUsers.Manager.Email!));
 
         Assert.NotNull(tokenResponse);
 

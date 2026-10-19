@@ -4,4 +4,4 @@ using MediatR;
 
 namespace MechanicShop.Application.Features.Identity.Queries.GenerateTokens;
 
-public sealed record GenerateTokenQuery(string Email,string Password) : IRequest<Result<TokenResponse>>, ISensitiveRequest;
+public sealed record GenerateTokenQuery(string UserName, string Password) : IRequest<Result<TokenResponse>>, ISensitiveRequest;

@@ -21,7 +21,7 @@ public class CustomAuthenticationStateProvider(
 
     private bool authenticated = false;
 
-    public async Task<FormResult> LoginAsync(string email, string password)
+    public async Task<FormResult> LoginAsync(string userName, string password)
     {
         try
         {
@@ -29,7 +29,7 @@ public class CustomAuthenticationStateProvider(
             var result = await httpClient.PostAsJsonAsync(
                 "identity/token/generate", new
                 {
-                    email,
+                    userName,
                     password
                 });
 
@@ -51,7 +51,7 @@ public class CustomAuthenticationStateProvider(
         return new FormResult
         {
             Succeeded = false,
-            ErrorList = ["Invalid email and/or password."]
+            ErrorList = ["Invalid username and/or password."]
         };
     }
 

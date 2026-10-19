@@ -6,22 +6,22 @@ public class GenerateTokenQueryValidatorTests
 {
     private readonly GenerateTokenQueryValidator _validator = new();
 
-    private static GenerateTokenQuery Valid() => new("user@example.com", "password");
-
-    [Fact]
-    public void Validate_WithValidQuery_IsValid()
-    {
-        Assert.True(_validator.Validate(Valid()).IsValid);
-    }
+    private static GenerateTokenQuery Valid() => new("ramez01", "password");
 
     [Theory]
-    [InlineData("")]
-    [InlineData("not-an-email")]
-    public void Validate_WithInvalidEmail_IsInvalid(string email)
+    [InlineData("ramez01")]
+    [InlineData("pm@localhost")] // seeded staff log in with their email as username
+    public void Validate_WithValidQuery_IsValid(string userName)
     {
-        var result = _validator.Validate(Valid() with { Email = email });
+        Assert.True(_validator.Validate(Valid() with { UserName = userName }).IsValid);
+    }
 
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(GenerateTokenQuery.Email));
+    [Fact]
+    public void Validate_WithEmptyUserName_IsInvalid()
+    {
+        var result = _validator.Validate(Valid() with { UserName = "" });
+
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(GenerateTokenQuery.UserName));
     }
 
     [Fact]

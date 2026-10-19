@@ -3,7 +3,9 @@ using System.Reflection;
 
 using MechanicShop.Api.Controllers;
 using MechanicShop.Api.IntegrationTests.Common;
+using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Identity;
+using MechanicShop.infrastructure.Data;
 using MechanicShop.infrastructure.Identity;
 using MechanicShop.infrastructure.RealTime;
 using MechanicShop.Tests.Common.Common;
@@ -52,6 +54,11 @@ public class StaffOnlyPolicyTests(WebAppFactory webAppFactory) : IAsyncLifetime
         var roleResult = await userManager.AddToRoleAsync(_nonStaffUser, RoleNames.Customer);
 
         Assert.True(roleResult.Succeeded, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+
+        // Customers can only obtain a token when a Customer profile is linked to the account.
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        context.Customers.Add(Customer.CreateSelfRegistered(Guid.NewGuid(), _nonStaffUser.Id, "Non Staff", email, "+201000000000").Value);
+        await context.SaveChangesAsync();
     }
 
     public Task DisposeAsync() => Task.CompletedTask;

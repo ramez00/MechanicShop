@@ -12,7 +12,7 @@ public class AppHttpClient(HttpClient client)
 
     public async Task<string> GenerateTokenAsync(AppUser user)
     {
-        var generateTokenQuery = new GenerateTokenQuery(user.Email!, user.Email!);
+        var generateTokenQuery = new GenerateTokenQuery(user.UserName!, user.Email!);
 
         var response = await _client.PostAsJsonAsync("/identity/token/generate", generateTokenQuery);
 

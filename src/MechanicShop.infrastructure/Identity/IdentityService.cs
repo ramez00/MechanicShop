@@ -14,12 +14,14 @@ namespace MechanicShop.infrastructure.Identity;
 public class IdentityService(
     UserManager<AppUser> userManager,
     IUserClaimsPrincipalFactory<AppUser> userClaimsPrincipalFactory,
-    IAuthorizationService authorizationService
+    IAuthorizationService authorizationService,
+    TimeProvider timeProvider
 ) : IIdentityService
 {
     private readonly UserManager<AppUser> _userManager = userManager;
     private readonly IUserClaimsPrincipalFactory<AppUser> _userClaimsPrincipalFactory = userClaimsPrincipalFactory;
     private readonly IAuthorizationService _authorizationService = authorizationService;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
 
     private async Task<IList<Claim>> getUserClaims(AppUser user) 
@@ -28,15 +30,25 @@ public class IdentityService(
     private async Task<IList<string>> getUserRoles(AppUser user)
         => await _userManager.GetRolesAsync(user);    
     
-    public async Task<Result<AppUserDto>> AuthenticateAsync(string email, string password)
+    public async Task<Result<AppUserDto>> AuthenticateAsync(string userName, string password)
     {
-        var user = await _userManager.FindByEmailAsync(email);
+        var user = await _userManager.FindByNameAsync(userName.Trim());
 
         if(user is null)
-            return ApplicationErrors.UserNotFound;
+            return ApplicationErrors.InvalidCredentials;
+
+        // Checked before the password, so the right password is still rejected while locked out.
+        if(await IsLockedOutAsync(user))
+            return ApplicationErrors.InvalidCredentials;
 
         if(!await _userManager.CheckPasswordAsync(user,password))
-            return Error.Conflict("Invalid_Login_Attempt", "Email / Password are incorrect");
+        {
+            await RecordFailedAttemptAsync(user);
+            return ApplicationErrors.InvalidCredentials;
+        }
+
+        if(user.AccessFailedCount > 0)
+            await _userManager.ResetAccessFailedCountAsync(user);
 
         var userRoles = await getUserRoles(user);
 
@@ -161,6 +173,26 @@ public class IdentityService(
         var user = await _userManager.FindByEmailAsync(email);
 
         return user is { EmailConfirmed: false } ? user.Id : null;
+    }
+
+    // UserManager's lockout reads the system clock; these use TimeProvider so the 15-minute window is testable.
+    private async Task<bool> IsLockedOutAsync(AppUser user)
+        => await _userManager.GetLockoutEnabledAsync(user)
+           && await _userManager.GetLockoutEndDateAsync(user) is { } lockoutEnd
+           && lockoutEnd > _timeProvider.GetUtcNow();
+
+    private async Task RecordFailedAttemptAsync(AppUser user)
+    {
+        if (!await _userManager.GetLockoutEnabledAsync(user))
+            return;
+
+        var lockoutEndBefore = await _userManager.GetLockoutEndDateAsync(user);
+
+        // Increments the failure count and, on reaching MaxFailedAccessAttempts, locks the account and resets the count.
+        await _userManager.AccessFailedAsync(user);
+
+        if (await _userManager.GetLockoutEndDateAsync(user) != lockoutEndBefore)
+            await _userManager.SetLockoutEndDateAsync(user, _timeProvider.GetUtcNow() + _userManager.Options.Lockout.DefaultLockoutTimeSpan);
     }
 
     private static bool TryDecodeToken(string token, out string rawToken)

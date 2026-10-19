@@ -9,7 +9,8 @@ public interface IIdentityService
 
     Task<bool> AuthorizeAsync(string userId, string? policyName);
 
-    Task<Result<AppUserDto>> AuthenticateAsync(string email, string password);
+    // Applies lockout; unknown user, wrong password and locked-out account all fail the same way.
+    Task<Result<AppUserDto>> AuthenticateAsync(string userName, string password);
 
     Task<Result<AppUserDto>> GetUserByIdAsync(string userId);
 

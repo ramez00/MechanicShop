@@ -32,7 +32,7 @@ public partial class ConfirmEmailTests(WebAppFactory webAppFactory)
 
     private readonly HttpClient _client = webAppFactory.CreateClient();
 
-    private sealed record Registration(string UserId, string Email, string Token);
+    private sealed record Registration(string UserId, string UserName, string Email, string Token);
 
     [GeneratedRegex(@"token=([A-Za-z0-9_-]+)")]
     private static partial Regex TokenInLink();
@@ -42,10 +42,11 @@ public partial class ConfirmEmailTests(WebAppFactory webAppFactory)
     {
         var suffix = Guid.NewGuid().ToString("N")[..10];
         var email = $"confirm.{suffix}@test.local";
+        var userName = $"confirm_{suffix}";
 
         var response = await (client ?? _client).PostAsJsonAsync(RegisterUrl, new RegisterCustomerRequest
         {
-            UserName = $"confirm_{suffix}",
+            UserName = userName,
             Password = ValidPassword,
             ConfirmPassword = ValidPassword,
             Email = email,
@@ -58,7 +59,7 @@ public partial class ConfirmEmailTests(WebAppFactory webAppFactory)
         var userId = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("userId").GetString()!;
         var token = await WaitForTokenAsync(email, expectedCount: 1);
 
-        return new Registration(userId, email, token);
+        return new Registration(userId, userName, email, token);
     }
 
     private async Task<string> WaitForTokenAsync(string email, int expectedCount)
@@ -75,8 +76,8 @@ public partial class ConfirmEmailTests(WebAppFactory webAppFactory)
     private Task<HttpResponseMessage> ConfirmAsync(string userId, string token, HttpClient? client = null)
         => (client ?? _client).PostAsJsonAsync(ConfirmUrl, new ConfirmEmailRequest { UserId = userId, Token = token });
 
-    private Task<HttpResponseMessage> LoginAsync(string email, string password)
-        => _client.PostAsJsonAsync(LoginUrl, new GenerateTokenQuery(email, password));
+    private Task<HttpResponseMessage> LoginAsync(string userName, string password)
+        => _client.PostAsJsonAsync(LoginUrl, new GenerateTokenQuery(userName, password));
 
     private async Task<bool> IsEmailConfirmedAsync(string userId)
     {
@@ -109,7 +110,7 @@ public partial class ConfirmEmailTests(WebAppFactory webAppFactory)
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(await IsEmailConfirmedAsync(registration.UserId));
 
-        var login = await LoginAsync(registration.Email, ValidPassword);
+        var login = await LoginAsync(registration.UserName, ValidPassword);
 
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
         Assert.False(string.IsNullOrEmpty((await BodyAsync(login)).GetProperty("accessToken").GetString()));
@@ -226,7 +227,7 @@ public partial class ConfirmEmailTests(WebAppFactory webAppFactory)
     {
         var registration = await RegisterAsync();
 
-        var response = await LoginAsync(registration.Email, ValidPassword);
+        var response = await LoginAsync(registration.UserName, ValidPassword);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Equal("User_EmailNotConfirmed", (await BodyAsync(response)).GetProperty("code").GetString());
@@ -237,7 +238,7 @@ public partial class ConfirmEmailTests(WebAppFactory webAppFactory)
     {
         var registration = await RegisterAsync();
 
-        var response = await LoginAsync(registration.Email, "WrongPassw0rd");
+        var response = await LoginAsync(registration.UserName, "WrongPassw0rd");
 
         Assert.NotEqual(HttpStatusCode.Forbidden, response.StatusCode);
     }

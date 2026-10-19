@@ -2,15 +2,15 @@ using FluentValidation;
 
 namespace MechanicShop.Application.Features.Identity.Queries.GenerateTokens;
 
+// Format rules aren't checked here: seeded staff usernames are emails, customer usernames aren't.
 public class GenerateTokenQueryValidator : AbstractValidator<GenerateTokenQuery>
 {
     public GenerateTokenQueryValidator()
     {
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is Required.")
-            .EmailAddress().WithMessage("Email is not valid");
+        RuleFor(x => x.UserName)
+            .NotEmpty().WithMessage("Username is required.");
 
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Password is Required");    
+            .NotEmpty().WithMessage("Password is required.");
     }
 }
