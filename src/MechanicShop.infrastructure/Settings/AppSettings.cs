@@ -17,4 +17,6 @@ public class AppSettings
 
     // Public base URL of the Blazor client; used to build links in emails.
     public string ClientBaseUrl { get; set; } = default!;
+    public int BookingLeadTimeMinutes { get; set; }
+    public int BookingHorizonDays { get; set; }
 }

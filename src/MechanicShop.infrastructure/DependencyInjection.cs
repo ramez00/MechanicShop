@@ -13,6 +13,7 @@ using MechanicShop.infrastructure.Identity.Policies;
 using Microsoft.Extensions.Caching.Hybrid;
 using MechanicShop.infrastructure.Services;
 using MechanicShop.infrastructure.RealTime;
+using MechanicShop.infrastructure.Settings;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -137,6 +138,7 @@ public static class DependencyInjection
             LocalCacheExpiration = TimeSpan.FromSeconds(30), // L1
         });
         services.AddScoped<IWorkOrderPolicy, WorkOrderPolicy>();
+        services.AddScoped<IShopSettings, ShopSettingsAdapter>();
 
         services.AddScoped<ITokenProvider, TokenProvider>();
 

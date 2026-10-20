@@ -20,6 +20,7 @@ IOptions<AppSettings> options
        var isOccupied = await _context.WorkOrders.AnyAsync(
             a =>
             a.Spot == spot &&
+            a.State != WorkOrderState.Cancelled &&
             a.StartAtUtc < endAt &&
             a.EndAtUtc > startAt &&
             (!excludeWorkOrderId.HasValue || a.Id != excludeWorkOrderId.Value),
@@ -33,6 +34,7 @@ IOptions<AppSettings> options
     public async Task<bool> IsLaborOccupied(Guid laborId, Guid excludedWorkOrderId, DateTimeOffset startAt, DateTimeOffset endAt)
         => await _context.WorkOrders.AnyAsync(a =>
             a.LaborId == laborId &&
+            a.State != WorkOrderState.Cancelled &&
             a.Id != excludedWorkOrderId &&
             a.StartAtUtc < endAt &&
             a.EndAtUtc > startAt);
@@ -47,20 +49,12 @@ IOptions<AppSettings> options
     }
 
     public async Task<bool> IsVehicleAlreadyScheduled(Guid vehicleId, DateTimeOffset startAt, DateTimeOffset endAt, Guid? excludedWorkOrderId = null)
-    {
-        var overlapping = await _context.WorkOrders
-            .Where(a =>
-                a.CarId == vehicleId &&
-                (excludedWorkOrderId == null || a.Id != excludedWorkOrderId) &&
-                a.StartAtUtc < endAt &&
-                a.EndAtUtc > startAt)
-            .ToListAsync();
-
-        return await _context.WorkOrders.AnyAsync(a =>
+        => await _context.WorkOrders.AnyAsync(a =>
             a.CarId == vehicleId &&
+            a.State != WorkOrderState.Cancelled &&
             (excludedWorkOrderId == null || a.Id != excludedWorkOrderId) &&
             a.StartAtUtc < endAt &&
-            a.EndAtUtc > startAt);    }
+            a.EndAtUtc > startAt);
 
     public Result<Success> ValidateMinimumRequirement(DateTimeOffset startAt, DateTimeOffset endAt)
     {
