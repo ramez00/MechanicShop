@@ -22,6 +22,90 @@ namespace MechanicShop.infrastructure.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("AppointmentRequestRepairTask", b =>
+                {
+                    b.Property<Guid>("AppointmentRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RepairTasksId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("AppointmentRequestId", "RepairTasksId");
+
+                    b.HasIndex("RepairTasksId");
+
+                    b.ToTable("AppointmentRequestRepairTasks", (string)null);
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.AppointmentRequests.AppointmentRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CarId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("LastModifiedUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset>("RequestedEndAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("RequestedStartAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("WorkOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("CarId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("WorkOrderId");
+
+                    b.HasIndex("Status", "RequestedStartAtUtc");
+
+                    b.ToTable("AppointmentRequests");
+                });
+
             modelBuilder.Entity("MechanicShop.Domain.Customers.Customer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -613,6 +697,41 @@ namespace MechanicShop.infrastructure.Data.Migrations
                     b.HasIndex("WorkOrderId");
 
                     b.ToTable("WorkOrderRepairTasks", (string)null);
+                });
+
+            modelBuilder.Entity("AppointmentRequestRepairTask", b =>
+                {
+                    b.HasOne("MechanicShop.Domain.AppointmentRequests.AppointmentRequest", null)
+                        .WithMany()
+                        .HasForeignKey("AppointmentRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MechanicShop.Domain.RepairTasks.RepairTask", null)
+                        .WithMany()
+                        .HasForeignKey("RepairTasksId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.AppointmentRequests.AppointmentRequest", b =>
+                {
+                    b.HasOne("MechanicShop.Domain.Customers.cars.Car", null)
+                        .WithMany()
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MechanicShop.Domain.Customers.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MechanicShop.Domain.WorkOrders.WorkOrder", null)
+                        .WithMany()
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("MechanicShop.Domain.Customers.cars.Car", b =>

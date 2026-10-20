@@ -18,7 +18,6 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MechanicShop.infrastructure.Email;
-using MechanicShop.infrastructure.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.DataProtection;
