@@ -1,12 +1,16 @@
+using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Application.Features.Appointments.Commands.SubmitAppointmentRequest;
 using MechanicShop.Application.Features.Scheduling.Queries.GetAvailability;
+using MechanicShop.Contracts.Requests.Appointments;
 
 namespace MechanicShop.Api.Controllers;
 
 [Route("api/v{version:apiVersion}/me")]
 [ApiVersion("1.0")]
 [Authorize]
-public sealed class MeController(ISender sender) : ApiController
+public sealed class MeController(ISender sender, IUser currentUser) : ApiController
 {
+    private Guid CustomerId => currentUser.CustomerId!.Value;
     /// <summary>
     /// Returns available booking slots for the given date and repair services.
     /// </summary>
@@ -40,5 +44,34 @@ public sealed class MeController(ISender sender) : ApiController
             new GetAvailabilityQuery(date, repairTaskIds, timeZone), ct);
 
         return result.Match(Ok, Problem);
+    }
+
+    /// <summary>
+    /// Submits a new appointment request for the authenticated customer.
+    /// </summary>
+    [HttpPost("appointments")]
+    [EndpointName("SubmitAppointmentRequest")]
+    [MapToApiVersion("1.0")]
+    [Authorize(Policy = "CustomerOnly")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> SubmitAppointmentRequest(
+        [FromBody] SubmitAppointmentRequestRequest request,
+        CancellationToken ct)
+    {
+        var command = new SubmitAppointmentRequestCommand(
+            CustomerId,
+            request.CarId,
+            request.RepairTaskIds,
+            request.RequestedStartAt,
+            request.Notes);
+
+        var result = await sender.Send(command, ct);
+
+        return result.Match(
+            id => CreatedAtRoute("GetAppointmentRequest", new { appointmentRequestId = id }, id),
+            Problem);
     }
 }
