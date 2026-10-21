@@ -105,4 +105,12 @@ public static class ApplicationErrors
 
     public static Error LaborNotFound =>
         Error.NotFound("Employee.LaborNotFound", "Labor does not exist.");
+
+    public static Error AppointmentNotFound =>
+        Error.NotFound("Appointment_NotFound",
+            "Appointment request does not exist.");
+
+    public static Error AppointmentSlotTakenOnApproval =>
+        Error.Conflict("Appointment_SlotTakenOnApproval",
+            "The requested time slot is no longer available for approval.");
 }

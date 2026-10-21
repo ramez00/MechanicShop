@@ -1,4 +1,5 @@
 using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Domain.AppointmentRequests.Enums;
 using MechanicShop.Domain.workOrders.Enums;
 using MechanicShop.infrastructure.Settings;
 using Microsoft.EntityFrameworkCore;
@@ -57,6 +58,32 @@ public class OverdueBookingCleanupService(
                 }
                 else
                     _logger.LogInformation("No overdue work orders found.");
+
+                // Expire overdue pending appointment requests
+                var utcNow = _dateTime.GetUtcNow();
+
+                var overdueAppointments = await db.AppointmentRequests
+                    .Where(ar => ar.Status == AppointmentRequestStatus.Pending
+                              && ar.RequestedEndAtUtc < utcNow)
+                    .ToListAsync(stoppingToken);
+
+                if (overdueAppointments.Count > 0)
+                {
+                    foreach (var ar in overdueAppointments)
+                    {
+                        var expireResult = ar.Expire();
+
+                        if (expireResult.IsError)
+                            _logger.LogWarning("Failed to expire AppointmentRequest {Id}: {Error}", ar.Id, expireResult.Errors);
+                    }
+
+                    await db.SaveChangesAsync(stoppingToken);
+
+                    _logger.LogInformation("Expired {Count} overdue appointment requests: {Ids}",
+                        overdueAppointments.Count, overdueAppointments.Select(a => a.Id));
+                }
+                else
+                    _logger.LogInformation("No overdue appointment requests found.");
             }
             catch(Exception ex)
             {
