@@ -4,7 +4,7 @@
 @using MechanicShop.Client.Services
 @using MechanicShop.Contracts.Common
 
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Manager,Mechanic,Receptionist")]
 
 <h3 class="my-4 border-start border-4 ps-3 fw-semibold text-light">
     <i class="bi bi-calendar-plus me-2 text-secondary"></i> Work Orders

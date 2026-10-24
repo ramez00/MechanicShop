@@ -1,4 +1,5 @@
 using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Domain.AppointmentRequests;
 using MechanicShop.Domain.Common;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.cars;
@@ -7,6 +8,7 @@ using MechanicShop.Domain.Identity;
 using MechanicShop.Domain.RepairTasks;
 using MechanicShop.Domain.RepairTasks.Parts;
 using MechanicShop.Domain.workOrders.Billing;
+using MechanicShop.Domain.AppointmentRequests;
 using MechanicShop.Domain.WorkOrders;
 using MechanicShop.infrastructure.Identity;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
@@ -29,6 +31,7 @@ public class AppDbContext(
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<AppointmentRequest> AppointmentRequests => Set<AppointmentRequest>();
 
     // Data Protection keys sign Identity tokens (e.g. email confirmation links); storing them here
     // keeps outstanding links valid across restarts and container redeploys.

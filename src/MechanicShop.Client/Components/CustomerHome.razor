@@ -1,0 +1,46 @@
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView>
+    <Authorized>
+        <header class="mb-4">
+            <h2 class="fw-bold text-light">Welcome back, @context.User.Identity?.Name!</h2>
+            <p class="lead text-muted">What would you like to do today?</p>
+        </header>
+    </Authorized>
+</AuthorizeView>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    <div class="col">
+        <a href="my-vehicles" class="text-decoration-none">
+            <div class="card h-100 bg-primary bg-opacity-10 border-primary border-opacity-25">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-truck display-3 text-primary mb-3 d-block"></i>
+                    <h4 class="card-title text-light">My Vehicles</h4>
+                    <p class="card-text text-muted">View and manage your registered vehicles</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col">
+        <a href="book-service" class="text-decoration-none">
+            <div class="card h-100 bg-success bg-opacity-10 border-success border-opacity-25">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-calendar-plus display-3 text-success mb-3 d-block"></i>
+                    <h4 class="card-title text-light">Book a Service</h4>
+                    <p class="card-text text-muted">Browse services and check available time slots</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col">
+        <a href="my-appointments" class="text-decoration-none">
+            <div class="card h-100 bg-info bg-opacity-10 border-info border-opacity-25">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-journal-check display-3 text-info mb-3 d-block"></i>
+                    <h4 class="card-title text-light">My Appointments</h4>
+                    <p class="card-text text-muted">View your upcoming and past appointments</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>

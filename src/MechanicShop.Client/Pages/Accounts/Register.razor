@@ -1,0 +1,169 @@
+@page "/register"
+@using MechanicShop.Contracts.Requests.Identity
+@using System.Net.Http.Json
+
+<div class="d-flex align-items-center justify-content-center">
+    <div class="card shadow rounded w-100" style="max-width: 800px;">
+        <div class="row g-0">
+            <div class="col-md-7 p-5">
+                <h4 class="mb-4">Create an Account</h4>
+
+                <EditForm Model="request" OnValidSubmit="HandleRegister" Context="formContext">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label>Username <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <div class="input-group-text"><i class="bi bi-person-fill"></i></div>
+                            <InputText class="form-control" @bind-Value="request.UserName" placeholder="Enter Username" />
+                        </div>
+                        <ValidationMessage For="@(() => request.UserName)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Full Name <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <div class="input-group-text"><i class="bi bi-person-badge-fill"></i></div>
+                            <InputText class="form-control" @bind-Value="request.FullName" placeholder="Enter Full Name" />
+                        </div>
+                        <ValidationMessage For="@(() => request.FullName)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Email <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <div class="input-group-text"><i class="bi bi-envelope-fill"></i></div>
+                            <InputText class="form-control" @bind-Value="request.Email" placeholder="Enter Email" />
+                        </div>
+                        <ValidationMessage For="@(() => request.Email)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Phone Number <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <div class="input-group-text"><i class="bi bi-telephone-fill"></i></div>
+                            <InputText class="form-control" @bind-Value="request.PhoneNumber" placeholder="+1234567890" />
+                        </div>
+                        <ValidationMessage For="@(() => request.PhoneNumber)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Password <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <div class="input-group-text"><i class="bi bi-lock-fill"></i></div>
+                            <InputText type="password" class="form-control" @bind-Value="request.Password" placeholder="Enter Password" />
+                        </div>
+                        <ValidationMessage For="@(() => request.Password)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Confirm Password <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <div class="input-group-text"><i class="bi bi-lock-fill"></i></div>
+                            <InputText type="password" class="form-control" @bind-Value="request.ConfirmPassword" placeholder="Confirm Password" />
+                        </div>
+                        <ValidationMessage For="@(() => request.ConfirmPassword)" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" disabled="@submitting">
+                        @if (submitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Register
+                    </button>
+                </EditForm>
+
+                @if (success)
+                {
+                    <div class="alert alert-success mt-3">
+                        Registration successful! Please check your email to confirm your account.
+                        <a href="/login" class="alert-link">Go to Login</a>
+                    </div>
+                }
+
+                @if (errors)
+                {
+                    <div class="alert alert-danger mt-3">
+                        <ul class="mb-0">
+                            @foreach (var error in errorList)
+                            {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <div class="text-center mt-3">
+                    <span>Already have an account?</span>
+                    <a href="/login" class="text-primary">Login</a>
+                </div>
+            </div>
+
+            <div class="col-md-5 d-none d-md-flex align-items-center justify-content-center text-secondary">
+                <i class="bi bi-person-plus-fill display-1"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject]
+    private IHttpClientFactory HttpClientFactory { get; set; } = default!;
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private RegisterCustomerRequest request = new();
+
+    private bool success, errors, submitting;
+    private List<string> errorList = [];
+
+    private async Task HandleRegister()
+    {
+        success = errors = false;
+        errorList.Clear();
+        submitting = true;
+
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient("MechanicShopClient");
+            var response = await httpClient.PostAsJsonAsync("identity/register", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                success = true;
+            }
+            else
+            {
+                errors = true;
+                var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+                if (problem?.Errors is { Count: > 0 })
+                {
+                    foreach (var entry in problem.Errors)
+                    {
+                        errorList.AddRange(entry.Value);
+                    }
+                }
+                else
+                {
+                    errorList.Add(problem?.Detail ?? "Registration failed. Please try again.");
+                }
+            }
+        }
+        catch
+        {
+            errors = true;
+            errorList.Add("An unexpected error occurred. Please try again.");
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private sealed class ProblemDetails
+    {
+        public string? Detail { get; set; }
+        public Dictionary<string, string[]>? Errors { get; set; }
+    }
+}

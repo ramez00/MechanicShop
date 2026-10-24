@@ -113,4 +113,12 @@ public static class ApplicationErrors
     public static Error AppointmentSlotTakenOnApproval =>
         Error.Conflict("Appointment_SlotTakenOnApproval",
             "The requested time slot is no longer available for approval.");
+
+    public static Error AppointmentSlotNoLongerAvailable =>
+        Error.Conflict("Appointment_SlotNoLongerAvailable",
+            "The requested time slot is no longer available.");
+
+    public static Error AppointmentCarNotOwned =>
+        Error.NotFound("Appointment_CarNotOwned",
+            "The selected vehicle does not belong to you.");
 }

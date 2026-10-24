@@ -17,16 +17,16 @@ It covers customers and their vehicles, repair tasks, work orders scheduled into
 
 ## Tech stack
 
-| Area | Technology |
-| --- | --- |
-| Backend | ASP.NET Core (.NET 10), MediatR (CQRS), FluentValidation |
-| Frontend | Blazor WebAssembly, hosted by the API project |
-| Data | EF Core with SQL Server, HybridCache |
-| Auth | ASP.NET Core Identity, JWT tokens |
-| Real-time | SignalR |
-| PDF | QuestPDF |
-| Observability | Serilog, OpenTelemetry, Seq, Prometheus, Grafana |
-| Tests | xUnit |
+| Area          | Technology                                               |
+| ------------- | -------------------------------------------------------- |
+| Backend       | ASP.NET Core (.NET 10), MediatR (CQRS), FluentValidation |
+| Frontend      | Blazor WebAssembly, hosted by the API project            |
+| Data          | EF Core with SQL Server, HybridCache                     |
+| Auth          | ASP.NET Core Identity, JWT tokens                        |
+| Real-time     | SignalR                                                  |
+| PDF           | QuestPDF                                                 |
+| Observability | Serilog, OpenTelemetry, Seq, Prometheus, Grafana         |
+| Tests         | xUnit                                                    |
 
 ## Getting started
 
@@ -61,37 +61,37 @@ is a different instance, change `ConnectionStrings:DefaultConnection` in
 docker compose up --build
 ```
 
-| Service | URL |
-| --- | --- |
-| App | http://localhost:5001 |
+| Service               | URL                   |
+| --------------------- | --------------------- |
+| App                   | http://localhost:5001 |
 | Seq (logs and traces) | http://localhost:8081 |
-| Prometheus | http://localhost:9090 |
-| Grafana | http://localhost:3000 |
+| Prometheus            | http://localhost:9090 |
+| Grafana               | http://localhost:3000 |
 
 ### Seeded accounts
 
 Each seeded user's password is the same as their email address.
 
-| Role | Email |
-| --- | --- |
-| Manager | `pm@localhost` |
-| Labor | `john.labor@localhost` |
-| Labor | `peter.labor@localhost` |
-| Labor | `kevin.labor@localhost` |
-| Labor | `suzan.labor@localhost` |
+| Role    | Email                   |
+| ------- | ----------------------- |
+| Manager | `pm@localhost`          |
+| Labor   | `john.labor@localhost`  |
+| Labor   | `peter.labor@localhost` |
+| Labor   | `kevin.labor@localhost` |
+| Labor   | `suzan.labor@localhost` |
 
 ## Configuration
 
 Shop rules live in the `AppSettings` section of `src/MechanicShop.Api/appsettings.json`:
 
-| Setting | Purpose |
-| --- | --- |
-| `OpeningTime` / `ClosingTime` | Shop operating hours |
-| `MaxSpots` | Number of work spots that can be booked in parallel |
-| `MinimumAppointmentDurationInMinutes` | Shortest bookable work order |
-| `BookingCancellationThresholdMinutes` | How long an unstarted booking is kept before it counts as overdue |
-| `OverdueBookingCleanupFrequencyMinutes` | How often the overdue-booking cleanup job runs |
-| `AllowedOrigins` | CORS origins |
+| Setting                                 | Purpose                                                           |
+| --------------------------------------- | ----------------------------------------------------------------- |
+| `OpeningTime` / `ClosingTime`           | Shop operating hours                                              |
+| `MaxSpots`                              | Number of work spots that can be booked in parallel               |
+| `MinimumAppointmentDurationInMinutes`   | Shortest bookable work order                                      |
+| `BookingCancellationThresholdMinutes`   | How long an unstarted booking is kept before it counts as overdue |
+| `OverdueBookingCleanupFrequencyMinutes` | How often the overdue-booking cleanup job runs                    |
+| `AllowedOrigins`                        | CORS origins                                                      |
 
 `JwtSettings:Secret` in `appsettings.json` is a placeholder — replace it before deploying anywhere.
 
@@ -123,15 +123,15 @@ exceptions. Controllers translate them into HTTP responses (404, 409, 400, 403).
 
 Versioned endpoints live under `/api/v1/`:
 
-| Resource | Route |
-| --- | --- |
-| Work orders and schedule | `/api/v1/workorders` |
-| Customers | `/api/v1/customers` |
-| Repair tasks | `/api/v1/repair-tasks` |
-| Labors | `/api/v1/labors` |
-| Invoices | `/api/v1/invoices` |
-| Dashboard | `/api/v1/dashboard` |
-| Tokens and current user | `/identity` |
+| Resource                 | Route                  |
+| ------------------------ | ---------------------- |
+| Work orders and schedule | `/api/v1/workorders`   |
+| Customers                | `/api/v1/customers`    |
+| Repair tasks             | `/api/v1/repair-tasks` |
+| Labors                   | `/api/v1/labors`       |
+| Invoices                 | `/api/v1/invoices`     |
+| Dashboard                | `/api/v1/dashboard`    |
+| Tokens and current user  | `/identity`            |
 
 In Development the OpenAPI document is served at `/openapi/v1.json`, with Swagger UI and Scalar
 enabled for browsing it. SignalR clients connect to `/hubs/workorders`.
@@ -164,3 +164,5 @@ dotnet ef database update \
   --project src/MechanicShop.infrastructure \
   --startup-project src/MechanicShop.Api
 ```
+
+claude --resume ed2a1729-81bb-4796-9117-28da0e052652

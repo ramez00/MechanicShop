@@ -841,7 +841,39 @@ public sealed class ServiceApi(HttpClient httpClient, TimeZoneService timeZoneSe
         public Dictionary<string, string[]>? Errors { get; set; }
     }
 
-        private static string GetFriendlyErrorMessage(HttpStatusCode statusCode)
+        public async Task<ApiResult<TResponse>> GetWithTimeZoneAsync<TResponse>(string requestUri, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tz = await _timeZoneService.GetLocalTimeZoneAsync();
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            request.Headers.Add("X-TimeZone", tz);
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return await ToFailureAsync<TResponse>(response, cancellationToken);
+            }
+
+            if (response.StatusCode == HttpStatusCode.NoContent || response.Content.Headers.ContentLength == 0)
+            {
+                return ApiResult<TResponse>.Success(default!);
+            }
+
+            var data = await response.Content.ReadFromJsonAsync<TResponse>(JsonOptions, cancellationToken);
+            return ApiResult<TResponse>.Success(data!);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return ApiResult<TResponse>.Failure(ex.Message);
+        }
+    }
+
+    private static string GetFriendlyErrorMessage(HttpStatusCode statusCode)
     {
         return statusCode switch
         {

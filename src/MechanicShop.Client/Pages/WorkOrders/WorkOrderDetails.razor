@@ -4,7 +4,7 @@
 @using MechanicShop.Client.Models
 @using MechanicShop.Client.Services
 @using MechanicShop.Contracts.Common
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Manager,Mechanic,Receptionist")]
 
 @if (WorkOrder is null)
 {

@@ -1,11 +1,20 @@
-﻿@page "/"
+@page "/"
 
 
 <PageTitle>Home</PageTitle>
 
 <AuthorizeView>
     <Authorized>
-        <Dashboard />
+        <AuthorizeView Roles="Manager,Mechanic,Receptionist">
+            <Authorized Context="staffContext">
+                <Dashboard />
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Customer">
+            <Authorized Context="customerContext">
+                <CustomerHome />
+            </Authorized>
+        </AuthorizeView>
     </Authorized>
     <NotAuthorized>
         <LandingPage />

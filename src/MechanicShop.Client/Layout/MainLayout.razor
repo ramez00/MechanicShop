@@ -30,7 +30,7 @@
                     </strong>
                 </a>
                 <nav class="nav col-12 col-lg-auto my-2 justify-content-around my-md-0 text-small">
-                    <AuthorizeView>
+                    <AuthorizeView Roles="Manager,Mechanic,Receptionist">
                         <Authorized>
                             <NavLink href="customers"
                                 class="main-menu-item nav-link text-white d-flex flex-column justify-content-center align-items-center text-center"
@@ -54,6 +54,25 @@
                             </NavLink>
                         </Authorized>
                     </AuthorizeView>
+                    <AuthorizeView Roles="Customer">
+                        <Authorized>
+                            <NavLink href="my-vehicles"
+                                class="main-menu-item nav-link text-white d-flex flex-column justify-content-center align-items-center text-center"
+                                style="width: 120px;" Match="NavLinkMatch.All">
+                                <span class="bi bi-truck nav-menu" aria-hidden="true"></span> My Vehicles
+                            </NavLink>
+                            <NavLink href="book-service"
+                                class="main-menu-item nav-link text-white d-flex flex-column justify-content-center align-items-center text-center"
+                                style="width: 120px;" Match="NavLinkMatch.All">
+                                <span class="bi bi-calendar-plus nav-menu" aria-hidden="true"></span> Book a Service
+                            </NavLink>
+                            <NavLink href="my-appointments"
+                                class="main-menu-item nav-link text-white d-flex flex-column justify-content-center align-items-center text-center"
+                                style="width: 120px;" Match="NavLinkMatch.All">
+                                <span class="bi bi-journal-check nav-menu" aria-hidden="true"></span> My Appointments
+                            </NavLink>
+                        </Authorized>
+                    </AuthorizeView>
                 </nav>
                 <div>
                     <AuthorizeView>
@@ -68,9 +87,14 @@
                         </Authorized>
                         <NotAuthorized>
                             <a href="login"
-                                class="link-body-emphasis link-offset-2 link-underline-opacity-25 link-underline-opacity-75-hover">
-                                <span class="bi bi-unlock me-3" aria-hidden="true" style="vertical-align:middle"></span>
+                                class="link-body-emphasis link-offset-2 link-underline-opacity-25 link-underline-opacity-75-hover me-3">
+                                <span class="bi bi-unlock me-1" aria-hidden="true" style="vertical-align:middle"></span>
                                 Login
+                            </a>
+                            <a href="register"
+                                class="btn btn-outline-primary btn-sm">
+                                <span class="bi bi-person-plus me-1" aria-hidden="true"></span>
+                                Register
                             </a>
                         </NotAuthorized>
                     </AuthorizeView>
