@@ -1,0 +1,236 @@
+@page "/book-service"
+@using System.Globalization
+@using MechanicShop.Client.Models
+@using MechanicShop.Client.Services
+@attribute [Authorize(Roles = "Customer")]
+
+<PageTitle>Book a Service</PageTitle>
+
+<h3 class="my-4 border-start border-4 ps-3 fw-semibold text-light">
+    <i class="bi bi-calendar-plus me-2 text-secondary"></i> Book a Service
+</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
+
+@if (isLoadingServices)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading services...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-lg-8">
+            <h5 class="text-muted mb-3">Available Services</h5>
+            <p class="text-muted small mb-3">Select the services you need, then check availability.</p>
+
+            @if (services.Count == 0)
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-tools display-1 text-muted"></i>
+                    <p class="text-muted mt-3">No services available at the moment.</p>
+                </div>
+            }
+            else
+            {
+                <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
+                    @foreach (var service in services)
+                    {
+                        var isSelected = selectedServiceIds.Contains(service.Id);
+                        <div class="col">
+                            <div class="card h-100 bg-dark border-secondary @(isSelected ? "border-primary border-2" : "")"
+                                 style="cursor: pointer;" @onclick="() => ToggleService(service.Id)">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="card-title text-light mb-1">@service.Name</h6>
+                                        @if (isSelected)
+                                        {
+                                            <i class="bi bi-check-circle-fill text-primary"></i>
+                                        }
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-2">
+                                        <span class="text-muted small">
+                                            <i class="bi bi-clock me-1"></i> @service.EstimatedDurationInMins min
+                                        </span>
+                                        <span class="fw-semibold text-success">
+                                            @service.EstimatedTotal.ToString("C", CultureInfo.GetCultureInfo("en-us"))
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-dark border-secondary sticky-top" style="top: 1rem;">
+                <div class="card-header border-secondary">
+                    <h5 class="mb-0 text-light"><i class="bi bi-cart me-2"></i> Your Selection</h5>
+                </div>
+                <div class="card-body">
+                    @if (selectedServiceIds.Count == 0)
+                    {
+                        <p class="text-muted">No services selected yet.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-3">
+                            @foreach (var service in services.Where(s => selectedServiceIds.Contains(s.Id)))
+                            {
+                                <li class="d-flex justify-content-between py-1">
+                                    <span class="text-light">@service.Name</span>
+                                    <span class="text-success">@service.EstimatedTotal.ToString("C", CultureInfo.GetCultureInfo("en-us"))</span>
+                                </li>
+                            }
+                        </ul>
+                        <hr class="border-secondary" />
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span class="text-light">Estimated Total</span>
+                            <span class="text-success">
+                                @services.Where(s => selectedServiceIds.Contains(s.Id)).Sum(s => s.EstimatedTotal)
+                                        .ToString("C", CultureInfo.GetCultureInfo("en-us"))
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small mt-1">
+                            <span>Estimated Duration</span>
+                            <span>@services.Where(s => selectedServiceIds.Contains(s.Id)).Sum(s => s.EstimatedDurationInMins) min</span>
+                        </div>
+                    }
+
+                    <hr class="border-secondary" />
+
+                    <div class="mb-3">
+                        <label class="form-label text-light">Preferred Date</label>
+                        <input type="date" class="form-control bg-dark text-light border-secondary"
+                               @bind="selectedDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    <button class="btn btn-primary w-100" disabled="@(!CanCheckAvailability)"
+                            @onclick="CheckAvailability">
+                        @if (isCheckingAvailability)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        }
+                        Check Availability
+                    </button>
+                </div>
+
+                @if (availabilitySlots is not null)
+                {
+                    <div class="card-footer border-secondary">
+                        <h6 class="text-light mb-2">Available Slots for @selectedDate.ToString("MMM dd, yyyy")</h6>
+                        @if (!string.IsNullOrEmpty(availabilityMessage))
+                        {
+                            <p class="text-muted small">@availabilityMessage</p>
+                        }
+                        @if (availabilitySlots.Count == 0)
+                        {
+                            <p class="text-warning small">No available slots on this date. Try another day.</p>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var slot in availabilitySlots)
+                                {
+                                    <span class="badge bg-success bg-opacity-75 py-2 px-3">
+                                        @slot.StartAt.ToLocalTime().ToString("h:mm tt") &ndash; @slot.EndAt.ToLocalTime().ToString("h:mm tt")
+                                    </span>
+                                }
+                            </div>
+                            <p class="text-muted small mt-2">
+                                Appointment booking coming soon. Please call us to confirm your preferred slot.
+                            </p>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] private ServiceApi ServiceApi { get; set; } = default!;
+
+    private List<BookableServiceModel> services = [];
+    private HashSet<Guid> selectedServiceIds = [];
+    private DateTime selectedDate = DateTime.Today.AddDays(1);
+    private bool isLoadingServices = true;
+    private bool isCheckingAvailability;
+    private string? errorMessage;
+    private List<BookingSlotModel>? availabilitySlots;
+    private string? availabilityMessage;
+
+    private bool CanCheckAvailability => selectedServiceIds.Count > 0 && !isCheckingAvailability;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await ServiceApi.GetAsync<List<BookableServiceModel>>("api/v1/me/services");
+        if (result.IsSuccess)
+        {
+            services = result.Data ?? [];
+        }
+        else
+        {
+            errorMessage = result.FirstErrorMessage ?? "Failed to load services.";
+        }
+        isLoadingServices = false;
+    }
+
+    private void ToggleService(Guid serviceId)
+    {
+        if (!selectedServiceIds.Remove(serviceId))
+        {
+            selectedServiceIds.Add(serviceId);
+        }
+        availabilitySlots = null;
+    }
+
+    private async Task CheckAvailability()
+    {
+        isCheckingAvailability = true;
+        errorMessage = null;
+        availabilitySlots = null;
+        availabilityMessage = null;
+
+        var date = DateOnly.FromDateTime(selectedDate);
+        var taskIdParams = string.Join("&", selectedServiceIds.Select(id => $"repairTaskIds={id}"));
+        var url = $"api/v1/me/availability?date={date:yyyy-MM-dd}&{taskIdParams}";
+
+        var result = await ServiceApi.GetWithTimeZoneAsync<AvailabilityResponseModel>(url);
+
+        if (result.IsSuccess && result.Data is not null)
+        {
+            availabilitySlots = result.Data.Slots;
+            availabilityMessage = result.Data.Message;
+        }
+        else
+        {
+            errorMessage = result.FirstErrorMessage ?? "Failed to check availability.";
+        }
+
+        isCheckingAvailability = false;
+    }
+
+    private class AvailabilityResponseModel
+    {
+        public List<BookingSlotModel> Slots { get; set; } = [];
+        public string? Message { get; set; }
+    }
+
+    private class BookingSlotModel
+    {
+        public DateTimeOffset StartAt { get; set; }
+        public DateTimeOffset EndAt { get; set; }
+    }
+}

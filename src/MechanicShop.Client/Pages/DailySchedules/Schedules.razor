@@ -6,7 +6,7 @@
 @using MechanicShop.Contracts.Responses
 @using MechanicShop.Client.Pages.DailySchedules.Components
 
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Manager,Mechanic,Receptionist")]
 
 
 <div class="mb-3 row">

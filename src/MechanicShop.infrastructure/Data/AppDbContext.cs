@@ -1,4 +1,5 @@
 using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Domain.AppointmentRequests;
 using MechanicShop.Domain.Common;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.cars;

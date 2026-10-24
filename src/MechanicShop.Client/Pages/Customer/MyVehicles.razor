@@ -1,0 +1,288 @@
+@page "/my-vehicles"
+@using MechanicShop.Client.Common
+@using MechanicShop.Client.Models
+@using MechanicShop.Client.Services
+@using MechanicShop.Contracts.Requests.Customers
+@attribute [Authorize(Roles = "Customer")]
+
+<PageTitle>My Vehicles</PageTitle>
+
+<h3 class="my-4 border-start border-4 ps-3 fw-semibold text-light">
+    <i class="bi bi-truck me-2 text-secondary"></i> My Vehicles
+</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @successMessage
+        <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="text-muted mb-0">@vehicles.Count vehicle(s) registered</p>
+    <button class="btn btn-primary" @onclick="ShowAddForm">
+        <i class="bi bi-plus-lg me-1"></i> Add Vehicle
+    </button>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (vehicles.Count == 0)
+{
+    <div class="text-center py-5">
+        <i class="bi bi-truck display-1 text-muted"></i>
+        <p class="text-muted mt-3">You haven't registered any vehicles yet.</p>
+        <button class="btn btn-outline-primary" @onclick="ShowAddForm">
+            <i class="bi bi-plus-lg me-1"></i> Add your first vehicle
+        </button>
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @foreach (var vehicle in vehicles)
+        {
+            <div class="col">
+                <div class="card h-100 bg-dark border-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title text-light">
+                            <i class="bi bi-car-front me-2"></i>
+                            @vehicle.Year @vehicle.Make @vehicle.Model
+                        </h5>
+                        <p class="card-text">
+                            <span class="badge bg-secondary fs-6">
+                                <i class="bi bi-credit-card-2-front me-1"></i> @vehicle.LicensePlate
+                            </span>
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent border-secondary d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-warning" @onclick="() => ShowEditForm(vehicle)">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteVehicle(vehicle.VehicleId)">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (showForm)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-light">@(isEditing ? "Edit Vehicle" : "Add Vehicle")</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseForm"></button>
+                </div>
+                <EditForm Model="formModel" OnValidSubmit="HandleSubmit">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-light">Make <span class="text-danger">*</span></label>
+                            <InputSelect class="form-select bg-dark text-light border-secondary"
+                                         @bind-Value="formModel.Make"
+                                         @bind-Value:after="OnMakeChanged">
+                                <option value="">-- Select Make --</option>
+                                @foreach (var make in CarMakes.Keys.OrderBy(k => k))
+                                {
+                                    <option value="@make">@make</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => formModel.Make" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">Model <span class="text-danger">*</span></label>
+                            <InputSelect class="form-select bg-dark text-light border-secondary"
+                                         @bind-Value="formModel.Model"
+                                         disabled="@(string.IsNullOrEmpty(formModel.Make))">
+                                <option value="">-- Select Model --</option>
+                                @if (!string.IsNullOrEmpty(formModel.Make) && CarMakes.ContainsKey(formModel.Make))
+                                {
+                                    @foreach (var model in CarMakes[formModel.Make].OrderBy(m => m))
+                                    {
+                                        <option value="@model">@model</option>
+                                    }
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => formModel.Model" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">Year <span class="text-danger">*</span></label>
+                            <InputNumber class="form-control bg-dark text-light border-secondary"
+                                         @bind-Value="formModel.Year" min="1900" max="@DateTime.Now.Year" />
+                            <ValidationMessage For="() => formModel.Year" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">License Plate <span class="text-danger">*</span></label>
+                            <InputText class="form-control bg-dark text-light border-secondary" @bind-Value="formModel.LicensePlate" />
+                            <ValidationMessage For="() => formModel.LicensePlate" />
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseForm">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            }
+                            @(isEditing ? "Save Changes" : "Add Vehicle")
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] private ServiceApi ServiceApi { get; set; } = default!;
+
+    private static Dictionary<string, List<string>> CarMakes => CarMakesData.CarMakes;
+
+    private List<VehicleModel> vehicles = [];
+    private bool isLoading = true;
+    private bool showForm;
+    private bool isEditing;
+    private bool isSaving;
+    private Guid? editingVehicleId;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private CreateVehicleRequest formModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVehicles();
+    }
+
+    private async Task LoadVehicles()
+    {
+        isLoading = true;
+        var result = await ServiceApi.GetAsync<List<VehicleModel>>("api/v1/me/vehicles");
+        if (result.IsSuccess)
+        {
+            vehicles = result.Data ?? [];
+        }
+        else
+        {
+            errorMessage = result.FirstErrorMessage ?? "Failed to load vehicles.";
+        }
+        isLoading = false;
+    }
+
+    private void ShowAddForm()
+    {
+        isEditing = false;
+        editingVehicleId = null;
+        formModel = new CreateVehicleRequest { Year = DateTime.Now.Year };
+        showForm = true;
+    }
+
+    private void ShowEditForm(VehicleModel vehicle)
+    {
+        isEditing = true;
+        editingVehicleId = vehicle.VehicleId;
+        formModel = new CreateVehicleRequest
+        {
+            Make = vehicle.Make,
+            Model = vehicle.Model,
+            Year = vehicle.Year,
+            LicensePlate = vehicle.LicensePlate
+        };
+        showForm = true;
+    }
+
+    private void CloseForm()
+    {
+        showForm = false;
+        formModel = new CreateVehicleRequest();
+    }
+
+    private void OnMakeChanged()
+    {
+        formModel.Model = "";
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSaving = true;
+        errorMessage = null;
+        successMessage = null;
+
+        if (isEditing && editingVehicleId.HasValue)
+        {
+            var updateRequest = new UpdateVehicleRequest
+            {
+                Make = formModel.Make,
+                Model = formModel.Model,
+                Year = formModel.Year,
+                LicensePlate = formModel.LicensePlate
+            };
+            var result = await ServiceApi.PutAsync<UpdateVehicleRequest, VehicleModel>(
+                $"api/v1/me/vehicles/{editingVehicleId.Value}", updateRequest);
+            if (result.IsSuccess)
+            {
+                successMessage = "Vehicle updated successfully.";
+                CloseForm();
+                await LoadVehicles();
+            }
+            else
+            {
+                errorMessage = result.FirstErrorMessage ?? "Failed to update vehicle.";
+            }
+        }
+        else
+        {
+            var result = await ServiceApi.PostAsync<CreateVehicleRequest, VehicleModel>(
+                "api/v1/me/vehicles", formModel);
+            if (result.IsSuccess)
+            {
+                successMessage = "Vehicle added successfully.";
+                CloseForm();
+                await LoadVehicles();
+            }
+            else
+            {
+                errorMessage = result.FirstErrorMessage ?? "Failed to add vehicle.";
+            }
+        }
+
+        isSaving = false;
+    }
+
+    private async Task DeleteVehicle(Guid vehicleId)
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        var result = await ServiceApi.DeleteAsync($"api/v1/me/vehicles/{vehicleId}");
+        if (result.IsSuccess)
+        {
+            successMessage = "Vehicle deleted successfully.";
+            await LoadVehicles();
+        }
+        else
+        {
+            errorMessage = result.FirstErrorMessage ?? "Failed to delete vehicle.";
+        }
+    }
+}

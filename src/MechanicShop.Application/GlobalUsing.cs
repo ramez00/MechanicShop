@@ -1,3 +1,4 @@
+global using MechanicShop.Domain.AppointmentRequests;
 global using MechanicShop.Domain.Customers;
 global using MechanicShop.Domain.Customers.cars;
 global using MechanicShop.Domain.Employees;
